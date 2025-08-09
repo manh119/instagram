@@ -1,0 +1,99 @@
+# === Java / Gradle ===
+/.gradle/
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+gradle-app.setting
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+.recommenders/
+
+# IntelliJ / JetBrains
+/.idea/
+/*.iml
+*.iws
+.idea_modules/
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+# VS Code
+.vscode/
+.history/
+
+# === Spring / config / logs / secrets ===
+*.log
+logs/
+*.pid
+*.seed
+*.tmp
+*.local
+/local.properties
+.env
+.env.* 
+# ignore common secret config files
+secret.properties
+credentials.yml
+credentials.yaml
+secrets.yml
+secrets.yaml
+*.jks
+*.keystore
+
+# If you have application-specific local overrides, ignore them:
+application-local.yml
+application-local.yaml
+
+# === Node / React frontend ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json     # (optional) remove this line if you want to track package-lock.json
+.pnpm-debug.log*
+.pnp.*
+dist/
+build/
+public/build/
+.cache/
+coverage/
+.eslintcache
+/.parcel-cache
+
+# === Frontend tooling ===
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+
+# === Static / generated files ===
+*.map
+*.gz
+*.br
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Containers / misc ===
+docker-compose.override.yml
+docker-compose.*.yml
+.Dockerfile.swp
+
+# === Logs and coverage ===
+coverage/
+*.lcov
+
+# === Misc editors ===
+*~ 
+*.swp
+*.swo
