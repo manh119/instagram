@@ -26,8 +26,10 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     log.warn("Configuring http filterChain");
     http
-        .authorizeHttpRequests(authorize -> authorize.requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll())
         .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+            .requestMatchers("/posts/user/**").permitAll()
+            .requestMatchers("/**").permitAll()
             .anyRequest()
             .authenticated())
         .oauth2Login(oauth2 -> oauth2
