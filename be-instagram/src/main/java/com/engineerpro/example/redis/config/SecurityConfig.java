@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.engineerpro.example.redis.service.OAuth2UserService;
 
@@ -21,14 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 public class SecurityConfig {
 
   private final OAuth2UserService oAuth2UserService;
+  private final CorsConfigurationSource corsConfigurationSource;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     log.warn("Configuring http filterChain");
     http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
             .requestMatchers("/posts/user/**").permitAll()
+            .requestMatchers("/posts/{id}").permitAll()
             .requestMatchers("/**").permitAll()
             .anyRequest()
             .authenticated())
