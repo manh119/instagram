@@ -1,9 +1,9 @@
-import { Box, Container, Flex, Skeleton, SkeletonCircle, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Flex, Skeleton, SkeletonCircle, Text, VStack, Button, Center } from "@chakra-ui/react";
 import FeedPost from "./FeedPost";
 import useGetFeedPosts from "../../hooks/useGetFeedPosts";
 
 const FeedPosts = () => {
-	const { isLoading, posts } = useGetFeedPosts();
+	const { isLoading, posts, hasMore, loadMorePosts, refreshPosts } = useGetFeedPosts();
 
 	return (
 		<Container maxW={"container.sm"} py={10} px={2}>
@@ -23,14 +23,50 @@ const FeedPosts = () => {
 					</VStack>
 				))}
 
-			{!isLoading && posts.length > 0 && posts.map((post) => <FeedPost key={post.id} post={post} />)}
-			{!isLoading && posts.length === 0 && (
+			{!isLoading && posts.length > 0 && (
 				<>
-					<Text fontSize={"md"} color={"red.400"}>
-						Dayuum. Looks like you don&apos;t have any friends.
-					</Text>
-					<Text color={"red.400"}>Stop coding and go make some!!</Text>
+					{posts.map((post) => <FeedPost key={post.id} post={post} />)}
+
+					{hasMore && (
+						<Center mt={6}>
+							<Button
+								onClick={loadMorePosts}
+								colorScheme="blue"
+								variant="outline"
+								size="lg"
+							>
+								Load More Posts
+							</Button>
+						</Center>
+					)}
+
+					{!hasMore && posts.length > 0 && (
+						<Center mt={6}>
+							<Text color="gray.500" fontSize="sm">
+								You've reached the end of your feed! 🎉
+							</Text>
+						</Center>
+					)}
 				</>
+			)}
+
+			{!isLoading && posts.length === 0 && (
+				<Center py={20}>
+					<VStack spacing={4}>
+						<Text fontSize={"xl"} color={"gray.500"} textAlign="center">
+							Welcome to your feed! 📱
+						</Text>
+						<Text color={"gray.400"} textAlign="center">
+							{posts.length === 0 ?
+								"It's time to stop coding and make new friends! 😄" :
+								"No posts to show right now."
+							}
+						</Text>
+						<Button onClick={refreshPosts} colorScheme="blue" variant="ghost">
+							Refresh Feed
+						</Button>
+					</VStack>
+				</Center>
 			)}
 		</Container>
 	);

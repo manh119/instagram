@@ -32,7 +32,7 @@ const PostFooter = ({ post, isProfilePage, creatorProfile }) => {
 				</Box>
 			</Flex>
 			<Text fontWeight={600} fontSize={"sm"}>
-				{likes} likes
+				{Array.isArray(likes) ? likes.length : 0} likes
 			</Text>
 
 			{isProfilePage && (
@@ -49,7 +49,7 @@ const PostFooter = ({ post, isProfilePage, creatorProfile }) => {
 							{post.caption}
 						</Text>
 					</Text>
-					{post.comments.length > 0 && (
+					{post.comments && post.comments.length > 0 && (
 						<Text fontSize='sm' color={"gray"} cursor={"pointer"} onClick={onOpen}>
 							View all {post.comments.length} comments
 						</Text>

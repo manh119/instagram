@@ -7,7 +7,12 @@ class PostService {
 
     // Get JWT token from localStorage
     getAuthHeaders() {
-        const token = localStorage.getItem('jwt_token');
+        const token = localStorage.getItem('authToken'); // Use same key as authService
+        console.log('PostService - Found token:', token ? token.substring(0, 20) + '...' : 'No token');
+        console.log('PostService - All localStorage keys:', Object.keys(localStorage));
+        console.log('PostService - authToken value:', localStorage.getItem('authToken'));
+        console.log('PostService - authUser value:', localStorage.getItem('authUser'));
+
         if (!token) {
             throw new Error('No authentication token found');
         }
@@ -246,9 +251,83 @@ class PostService {
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
-            return await response.json();
+            return true; // Comment deleted successfully
         } catch (error) {
             console.error('Error deleting comment:', error);
+            throw error;
+        }
+    }
+
+    // Get suggested users
+    async getSuggestedUsers(limit = 10) {
+        try {
+            const response = await fetch(`${this.baseURL}/users/suggested?limit=${limit}`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error getting suggested users:', error);
+            throw error;
+        }
+    }
+
+    // Follow a user
+    async followUser(profileId) {
+        try {
+            const response = await fetch(`${this.baseURL}/follow`, {
+                method: 'POST',
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ profileId })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            // Handle empty response body (backend returns ResponseEntity.ok().build())
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                return { success: true }; // Return success object for empty responses
+            }
+        } catch (error) {
+            console.error('Error following user:', error);
+            throw error;
+        }
+    }
+
+    // Unfollow a user
+    async unfollowUser(profileId) {
+        try {
+            const response = await fetch(`${this.baseURL}/follow`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ profileId })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            // Handle empty response body (backend returns ResponseEntity.ok().build())
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                return { success: true }; // Return success object for empty responses
+            }
+        } catch (error) {
+            console.error('Error unfollowing user:', error);
             throw error;
         }
     }

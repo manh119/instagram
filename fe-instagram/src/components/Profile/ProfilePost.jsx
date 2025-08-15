@@ -94,7 +94,7 @@ const ProfilePost = ({ post, isProfilePage }) => {
 					</Flex>
 				</Flex>
 
-				<Image src={post.imageURL} alt='profile post' w={"100%"} h={"100%"} objectFit={"cover"} />
+				<Image src={post.imageUrl} alt='profile post' w={"100%"} h={"100%"} objectFit={"cover"} />
 			</GridItem>
 
 			<Modal isOpen={isOpen} onClose={onClose} isCentered={true} size={{ base: "3xl", md: "5xl" }}>
@@ -118,7 +118,7 @@ const ProfilePost = ({ post, isProfilePage }) => {
 								justifyContent={"center"}
 								alignItems={"center"}
 							>
-								<Image src={post.imageURL} alt='profile post' />
+								<Image src={post.imageUrl} alt='profile post' />
 							</Flex>
 							<Flex flex={1} flexDir={"column"} px={10} display={{ base: "none", md: "flex" }}>
 								<Flex alignItems={"center"} justifyContent={"space-between"}>
