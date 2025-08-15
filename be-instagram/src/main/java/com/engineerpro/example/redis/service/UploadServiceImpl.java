@@ -53,7 +53,8 @@ public class UploadServiceImpl implements UploadService {
       log.error("Error when upload image", e);
       return null;
     }
-    return fileName;
+    // Return full URL that frontend can access
+    return String.format("http://localhost:8080/images/%s", fileName);
   }
 
 }
