@@ -25,7 +25,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import usePostStore from "../../store/postStore";
 import useUserProfileStore from "../../store/userProfileStore";
 import { useLocation } from "react-router-dom";
-import { addPostMock } from "../../services/mockData";
+import postService from "../../services/postService";
 
 const CreatePost = () => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -127,26 +127,40 @@ function useCreatePost() {
 	const addPost = useUserProfileStore((state) => state.addPost);
 	const userProfile = useUserProfileStore((state) => state.userProfile);
 	const { pathname } = useLocation();
+	const { user: authUser } = useAuth();
 
 	const handleCreatePost = async (selectedFile, caption) => {
 		if (isLoading) return;
 		if (!selectedFile) throw new Error("Please select an image");
+		if (!authUser) throw new Error("You must be logged in to create a post");
+
 		setIsLoading(true);
-		const newPost = {
-			caption: caption,
-			likes: [],
-			comments: [],
-			createdAt: Date.now(),
-			createdBy: authUser.uid,
-		};
 
 		try {
-			const created = addPostMock({ createdBy: authUser.uid, caption, imageURL: selectedFile });
-			createPost(created);
-			if (pathname !== "/" && userProfile?.uid === authUser.uid) addPost(created);
-			showToast("Success", "Post created successfully", "success");
+			// Create post using the real API
+			const postData = {
+				image: selectedFile,
+				caption: caption
+			};
+
+			const response = await postService.createPost(postData);
+
+			if (response && response.post) {
+				// Add the new post to the store
+				createPost(response.post);
+
+				// If we're on a profile page, also add to user profile store
+				if (pathname !== "/" && userProfile?.uid === authUser.uid) {
+					addPost(response.post);
+				}
+
+				showToast("Success", "Post created successfully", "success");
+			} else {
+				throw new Error("Failed to create post");
+			}
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			console.error('Error creating post:', error);
+			showToast("Error", error.message || "Failed to create post", "error");
 		} finally {
 			setIsLoading(false);
 		}

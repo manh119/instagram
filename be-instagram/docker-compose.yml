@@ -1,4 +1,3 @@
-
 services:
   mysql:
     image: mysql:latest
@@ -26,6 +25,19 @@ services:
       - "15673:15672"
       - "61614:61613"
 
+  minio:
+    image: minio/minio:latest
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
   spring-app-1:
     build:
       context: .
@@ -34,13 +46,14 @@ services:
       - mysql
       - redis
       - rabbitmq
+      - minio
     restart: always
     ports:
       - "127.0.0.1:8090:8080"
-      - "5005:5005"  # Debug port
+      - "5005:5005" # Debug port
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
-  
+
   spring-app-2:
     build:
       context: .
@@ -49,17 +62,21 @@ services:
       - mysql
       - redis
       - rabbitmq
+      - minio
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
-  
+
   nginx:
     image: nginx:1.13
     restart: always
     ports:
-    - 8080:8080
+      - 8080:8080
     volumes:
-    - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/conf:/etc/nginx/conf.d
     depends_on:
-    - spring-app-1
-    - spring-app-2
+      - spring-app-1
+      - spring-app-2
+
+volumes:
+  minio_data:

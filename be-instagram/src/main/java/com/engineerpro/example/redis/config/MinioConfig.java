@@ -10,7 +10,7 @@ public class MinioConfig {
   @Bean
   public MinioClient minioClient() {
     return MinioClient.builder()
-        .endpoint("http://host.docker.internal:9000")
+        .endpoint("http://localhost:9000")
         .credentials("minioadmin", "minioadmin")
         .build();
   }
