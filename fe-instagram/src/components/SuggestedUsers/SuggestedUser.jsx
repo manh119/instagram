@@ -3,18 +3,30 @@ import useFollowUser from "../../hooks/useFollowUser";
 import { useAuth } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 
-const SuggestedUser = ({ user, setUser }) => {
-	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(user.uid);
+const SuggestedUser = ({ user, updateUser, removeUser }) => {
+	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(user.id); // Use profile.id instead of uid
 	const { user: authUser } = useAuth();
 
 	const onFollowUser = async () => {
-		await handleFollowUser();
-		setUser({
-			...user,
-			followers: isFollowing
-				? user.followers.filter((follower) => follower.uid !== authUser.uid)
-				: [...user.followers, authUser],
-		});
+		try {
+			await handleFollowUser();
+
+			if (isFollowing) {
+				// Unfollowed - update follower count
+				updateUser(user.id, {
+					followersCount: user.followersCount - 1
+				});
+			} else {
+				// Followed - remove from suggestions and update follower count
+				updateUser(user.id, {
+					followersCount: user.followersCount + 1
+				});
+				// Optionally remove from suggestions after following
+				// removeUser(user.id);
+			}
+		} catch (error) {
+			console.error('Error in follow/unfollow:', error);
+		}
 	};
 
 	return (
@@ -30,7 +42,7 @@ const SuggestedUser = ({ user, setUser }) => {
 						</Box>
 					</Link>
 					<Box fontSize={11} color={"gray.500"}>
-						{user.followers.length} followers
+						{user.followersCount} followers
 					</Box>
 				</VStack>
 			</Flex>

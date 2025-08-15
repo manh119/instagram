@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
 import usePostStore from "../store/postStore";
 import useUserProfileStore from "../store/userProfileStore";
-import { addCommentMock } from "../services/mockData";
+import postService from "../services/postService";
 
 const usePostComment = () => {
 	const [isCommenting, setIsCommenting] = useState(false);
@@ -11,23 +11,29 @@ const usePostComment = () => {
 	const showToast = useShowToast();
 	const { posts, setPosts } = usePostStore();
 	const { userProfile, setUserProfile } = useUserProfileStore();
-	const addComment = usePostStore((state) => state.addComment);
 
 	const handlePostComment = async (postId, comment) => {
 		if (isCommenting) return;
 		if (!authUser) return showToast("Error", "You must be logged in to comment", "error");
 		setIsCommenting(true);
-		const newComment = {
-			comment,
-			createdAt: Date.now(),
-			createdBy: authUser.uid,
-			postId,
-		};
+
 		try {
-			addCommentMock(postId, newComment);
-			addComment(postId, newComment);
+			const response = await postService.createComment(postId, comment);
+
+			if (response && response.post) {
+				// Update the post in the store
+				const updatedPosts = posts.map(p =>
+					p.id === postId ? response.post : p
+				);
+				setPosts(updatedPosts);
+
+				showToast("Success", "Comment posted successfully", "success");
+			} else {
+				throw new Error("Failed to post comment");
+			}
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			console.error('Error posting comment:', error);
+			showToast("Error", error.message || "Failed to post comment", "error");
 		} finally {
 			setIsCommenting(false);
 		}

@@ -5,6 +5,9 @@ const usePostStore = create((set) => ({
 	createPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
 	deletePost: (id) => set((state) => ({ posts: state.posts.filter((post) => post.id !== id) })),
 	setPosts: (posts) => set({ posts }),
+	addPosts: (newPosts) => set((state) => ({
+		posts: [...state.posts, ...newPosts]
+	})),
 	addComment: (postId, comment) =>
 		set((state) => ({
 			posts: state.posts.map((post) => {

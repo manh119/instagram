@@ -1,27 +1,19 @@
 package com.engineerpro.example.redis.config;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.engineerpro.example.redis.model.Comment;
 import com.engineerpro.example.redis.model.Post;
 import com.engineerpro.example.redis.model.Profile;
-import com.engineerpro.example.redis.model.User;
-import com.engineerpro.example.redis.model.UserFollowing;
-import com.engineerpro.example.redis.repository.CommentRepository;
-import com.engineerpro.example.redis.repository.FollowerRepository;
 import com.engineerpro.example.redis.repository.PostRepository;
 import com.engineerpro.example.redis.repository.ProfileRepository;
-import com.engineerpro.example.redis.repository.UserRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,108 +27,91 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
+    private final Random random = new Random();
 
-    @Autowired
-    private FollowerRepository followerRepository;
+    // Fun captions for posts
+    private final List<String> funCaptions = Arrays.asList(
+        "Just discovered that coffee is actually a food group! ☕",
+        "My code has more bugs than a rainforest 🐛",
+        "Today's mood: I should probably adult, but I'm going to nap instead 😴",
+        "Plot twist: I'm not lazy, I'm just conserving energy for important things 🦥",
+        "My plants are still alive, so I'm basically a botanist now 🌱",
+        "Warning: May contain traces of sanity 🚨",
+        "I'm not arguing, I'm just explaining why I'm right 💁‍♂️",
+        "Life is short, make it awesome! ✨",
+        "I'm not a morning person, I'm a coffee person ☕",
+        "My diet is 90% coffee and 10% food that I forget to eat 🍕",
+        "I'm not procrastinating, I'm prioritizing my mental health 🧘‍♀️",
+        "Today's goal: Survive and maybe be productive 🤷‍♀️",
+        "I'm not late, everyone else is just early ⏰",
+        "My spirit animal is a sloth on a Monday 🦥",
+        "I'm not weird, I'm limited edition 🎭",
+        "Life is like a box of chocolates, but I ate them all 🍫",
+        "I'm not short, I'm fun-sized! 🎈",
+        "My superpower is finding the most comfortable position to sleep 😴",
+        "I'm not lazy, I'm just conserving my awesomeness for later 🌟",
+        "Today's forecast: 100% chance of awesome! 🌈"
+    );
 
-    @Autowired
-    private UserRepository userRepository;
+    // Fun usernames
+    private final List<String> funUsernames = Arrays.asList(
+        "coffee_addict", "code_ninja", "sleepy_dev", "bug_hunter", "lazy_genius",
+        "coffee_master", "debug_warrior", "nap_enthusiast", "code_artist", "fun_coder"
+    );
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("Starting data initialization...");
-        
-        // Check if data already exists
-        if (profileRepository.count() > 0) {
-            log.info("Database already contains data, skipping initialization");
-            return;
-        }
-
-        try {
-            createSampleData();
-            log.info("Sample data created successfully!");
-        } catch (Exception e) {
-            log.error("Error creating sample data: ", e);
+        // Only run if no profiles exist (first time setup)
+        if (profileRepository.count() == 0) {
+            log.info("No profiles found, creating test profiles with posts...");
+            createTestProfilesWithPosts();
+        } else {
+            log.info("Profiles already exist, skipping data initialization");
         }
     }
 
-    private void createSampleData() {
-        // Create sample profiles
-        List<Profile> profiles = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            Profile profile = Profile.builder()
-                .username("user" + i)
-                .displayName("User " + i)
-                .bio("This is user " + i + "'s bio")
-                .profileImageUrl("https://picsum.photos/200/200?random=" + i)
-                .userId(UUID.randomUUID().toString())
-                .build();
-            profiles.add(profileRepository.save(profile));
-        }
-
-        // Create sample posts
-        List<Post> posts = new ArrayList<>();
-        for (int i = 1; i <= 15; i++) {
-            Profile creator = profiles.get((i - 1) % profiles.size());
-            
-            Post post = Post.builder()
-                .caption("This is post " + i + " by " + creator.getUsername())
-                .createdBy(creator)
-                .imageUrl("https://picsum.photos/800/600?random=" + (i + 100))
-                .createdAt(new Date())
-                .userLikes(new HashSet<>())
-                .build();
-            
-            posts.add(postRepository.save(post));
-        }
-
-        // Add some likes to posts
-        for (Post post : posts) {
-            Set<Profile> likes = new HashSet<>();
-            int likeCount = (int) (Math.random() * 5) + 1; // 1-5 likes per post
-            List<Profile> shuffledProfiles = new ArrayList<>(profiles);
-            Collections.shuffle(shuffledProfiles);
-            
-            for (int i = 0; i < likeCount && i < shuffledProfiles.size(); i++) {
-                likes.add(shuffledProfiles.get(i));
-            }
-            post.setUserLikes(likes);
-            postRepository.save(post);
-        }
-
-        // Create sample comments
-        for (Post post : posts) {
-            int commentCount = (int) (Math.random() * 3) + 1; // 1-3 comments per post
-            for (int i = 0; i < commentCount; i++) {
-                Profile commenter = profiles.get((int) (Math.random() * profiles.size()));
-                Comment comment = Comment.builder()
-                    .post(post)
-                    .createdBy(commenter)
-                    .comment("Great post! Comment " + (i + 1) + " by " + commenter.getUsername())
-                    .createdAt(new Date())
+    private void createTestProfilesWithPosts() {
+        try {
+            // Create 5 test profiles with fun usernames
+            List<Profile> profiles = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                Profile profile = Profile.builder()
+                    .userId("user" + (i + 1))
+                    .username(funUsernames.get(i))
+                    .displayName("Fun User " + (i + 1))
+                    .bio("Just a fun user with awesome posts! 🎉 User " + (i + 1))
+                    .profileImageUrl("https://picsum.photos/200/200?random=" + (i + 1))
                     .build();
-                commentRepository.save(comment);
+                
+                profile = profileRepository.save(profile);
+                profiles.add(profile);
+                log.info("Created test profile: {}", profile.getUsername());
             }
-        }
 
-        // Create sample follow relationships
-        for (int i = 1; i <= 5; i++) {
-            Profile follower = profiles.get(i - 1);
-            for (int j = 0; j < 3; j++) { // Each user follows 3 others
-                Profile following = profiles.get((i + j) % profiles.size());
-                if (!follower.equals(following)) {
-                    UserFollowing userFollowing = new UserFollowing();
-                    userFollowing.setFollowerUserId(follower.getId());
-                    userFollowing.setFollowingUserId(following.getId());
-                    userFollowing.setCreatedAt(new Date());
-                    followerRepository.save(userFollowing);
-                }
+            // Create 20 random posts distributed among the profiles
+            for (int i = 0; i < 20; i++) {
+                Profile creator = profiles.get(i % profiles.size()); // Distribute posts among profiles
+                
+                Post post = Post.builder()
+                    .caption(funCaptions.get(random.nextInt(funCaptions.size())))
+                    .imageUrl("https://picsum.photos/800/800?random=" + (i + 10))
+                    .createdAt(new Date(System.currentTimeMillis() - (i * 86400000))) // Each post 1 day apart
+                    .createdBy(creator)
+                    .build();
+                
+                postRepository.save(post);
+                log.info("Created post {} by {}: {}", i + 1, creator.getUsername(), post.getCaption());
             }
-        }
 
-        log.info("Created {} profiles, {} posts, {} comments, and {} follow relationships", 
-            profiles.size(), posts.size(), commentRepository.count(), followerRepository.count());
+            log.info("✅ SUCCESS: Created {} test profiles with {} posts!", profiles.size(), 20);
+            log.info("📱 TEST PROFILES CREATED:");
+            for (Profile profile : profiles) {
+                log.info("   - {} (@{}) - {}", profile.getDisplayName(), profile.getUsername(), profile.getBio());
+            }
+            log.info("🔗 These profiles will now appear in suggested users!");
+
+        } catch (Exception e) {
+            log.error("Error creating test profiles: ", e);
+        }
     }
 }

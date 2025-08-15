@@ -22,4 +22,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
   @Query(value = "select count(*) from post where created_by_id in :ids", nativeQuery = true)
   int countByCreatedByIn(@Param("ids") List<Integer> createdByIdList);
+
+  int countByCreatedBy(Profile createdBy);
 }

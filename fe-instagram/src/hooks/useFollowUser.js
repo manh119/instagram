@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import useUserProfileStore from "../store/userProfileStore";
 import useShowToast from "./useShowToast";
-import { followToggleMock } from "../services/mockData";
+import postService from "../services/postService";
 
-const useFollowUser = (userId) => {
+const useFollowUser = (profileId) => {
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [isFollowing, setIsFollowing] = useState(false);
 	const { user: authUser, updateUser: setAuthUser } = useAuth();
@@ -14,13 +14,13 @@ const useFollowUser = (userId) => {
 	const handleFollowUser = async () => {
 		setIsUpdating(true);
 		try {
-			followToggleMock(authUser.uid, userId);
-
+			// Call the real API to follow/unfollow
 			if (isFollowing) {
-				// unfollow
+				// Unfollow
+				await postService.unfollowUser(profileId);
 				setAuthUser({
 					...authUser,
-					following: authUser.following.filter((uid) => uid !== userId),
+					following: authUser.following.filter((uid) => uid !== profileId),
 				});
 				if (userProfile)
 					setUserProfile({
@@ -32,15 +32,17 @@ const useFollowUser = (userId) => {
 					"user-info",
 					JSON.stringify({
 						...authUser,
-						following: authUser.following.filter((uid) => uid !== userId),
+						following: authUser.following.filter((uid) => uid !== profileId),
 					})
 				);
 				setIsFollowing(false);
+				showToast("Success", "Unfollowed successfully", "success");
 			} else {
-				// follow
+				// Follow
+				await postService.followUser(profileId);
 				setAuthUser({
 					...authUser,
-					following: [...authUser.following, userId],
+					following: [...authUser.following, profileId],
 				});
 
 				if (userProfile)
@@ -53,13 +55,15 @@ const useFollowUser = (userId) => {
 					"user-info",
 					JSON.stringify({
 						...authUser,
-						following: [...authUser.following, userId],
+						following: [...authUser.following, profileId],
 					})
 				);
 				setIsFollowing(true);
+				showToast("Success", "Followed successfully", "success");
 			}
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			console.error('Error following/unfollowing user:', error);
+			showToast("Error", "Failed to follow/unfollow user", "error");
 		} finally {
 			setIsUpdating(false);
 		}
@@ -67,10 +71,10 @@ const useFollowUser = (userId) => {
 
 	useEffect(() => {
 		if (authUser) {
-			const isFollowing = authUser.following.includes(userId);
+			const isFollowing = authUser.following.includes(profileId);
 			setIsFollowing(isFollowing);
 		}
-	}, [authUser, userId]);
+	}, [authUser, profileId]);
 
 	return { isUpdating, isFollowing, handleFollowUser };
 };

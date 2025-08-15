@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
 import usePostStore from "../store/postStore";
-import { toggleLikeMock } from "../services/mockData";
+import postService from "../services/postService";
 
 const useLikePost = (post) => {
-	const [likes, setLikes] = useState(post.likes);
+	const [likes, setLikes] = useState(post.userLikes || []);
 	const [isLiked, setIsLiked] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
 	const { user: authUser } = useAuth();
@@ -14,10 +14,17 @@ const useLikePost = (post) => {
 
 	// Initialize isLiked state based on whether the current user has liked the post
 	useEffect(() => {
-		if (authUser && post.likes) {
-			setIsLiked(post.likes.includes(authUser.uid));
+		if (authUser && post.userLikes) {
+			// Check if current user has liked the post
+			// Backend uses Profile objects with 'id' field, frontend might use 'uid'
+			setIsLiked(post.userLikes.some(user =>
+				user.id === authUser.id ||
+				user.id === authUser.uid ||
+				user.userId === authUser.uid
+			));
+			setLikes(post.userLikes || []);
 		}
-	}, [authUser, post.likes]);
+	}, [authUser, post.userLikes]);
 
 	const handleLikePost = async () => {
 		if (isUpdating) return;
@@ -25,11 +32,22 @@ const useLikePost = (post) => {
 		setIsUpdating(true);
 
 		try {
-			const updatedPost = toggleLikeMock(post.id, authUser.uid);
-			setIsLiked(!isLiked);
-			setLikes(updatedPost.likes.length);
+			const response = await postService.toggleLike(post.id, isLiked);
+
+			if (response && response.post) {
+				// Update the local state
+				setIsLiked(!isLiked);
+				setLikes(response.post.userLikes || []);
+
+				// Update the post in the store
+				const updatedPosts = posts.map(p =>
+					p.id === post.id ? response.post : p
+				);
+				setPosts(updatedPosts);
+			}
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			console.error('Error toggling like:', error);
+			showToast("Error", error.message || "Failed to update like", "error");
 		} finally {
 			setIsUpdating(false);
 		}
