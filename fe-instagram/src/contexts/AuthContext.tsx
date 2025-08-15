@@ -1,131 +1,96 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authService, AuthState, User } from '../services/authService';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { authService, User } from '../services/authService';
 
-interface AuthContextType extends AuthState {
-    login: (token: string, user: User) => void;
+interface AuthContextType {
+    user: User | null;
+    isAuthenticated: boolean;
+    loading: boolean;
+    login: (userData: User, token: string) => Promise<void>;
     logout: () => void;
-    refreshAuth: () => Promise<void>;
-    updateUser: (user: User) => void;
+    updateUser: (userData: User) => void;
+    checkAuth: () => Promise<boolean>;
+    authService: typeof authService;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext < AuthContextType | undefined > (undefined);
 
-interface AuthProviderProps {
-    children: ReactNode;
-}
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [authState, setAuthState] = useState<AuthState>({
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        loading: true
-    });
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [user, setUser] = useState < User | null > (null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Initialize authentication on app startup
+    // Initialize authentication state
     useEffect(() => {
-        const initializeAuth = async () => {
+        const initAuth = async () => {
             try {
-                const state = await authService.initializeAuth();
-                setAuthState(state);
+                const authState = await authService.initializeAuth();
+                if (authState.isAuthenticated) {
+                    setUser(authState.user);
+                    setIsAuthenticated(true);
+                }
             } catch (error) {
-                console.error('Error initializing authentication:', error);
-                setAuthState({
-                    isAuthenticated: false,
-                    user: null,
-                    token: null,
-                    loading: false
-                });
+                console.error('Auth initialization error:', error);
+                authService.logout();
+            } finally {
+                setLoading(false);
             }
         };
 
-        initializeAuth();
+        initAuth();
     }, []);
 
-    // Set up periodic token validation
-    useEffect(() => {
-        if (authState.isAuthenticated && authState.token) {
-            const interval = setInterval(async () => {
-                try {
-                    const isValid = await authService.checkAuth();
-                    if (!isValid) {
-                        setAuthState({
-                            isAuthenticated: false,
-                            user: null,
-                            token: null,
-                            loading: false
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error checking authentication:', error);
-                }
-            }, 5 * 60 * 1000); // Check every 5 minutes
-
-            return () => clearInterval(interval);
+    // Login function
+    const login = async (userData: User, token: string) => {
+        try {
+            authService.setAuth(token, userData);
+            setUser(userData);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-    }, [authState.isAuthenticated, authState.token]);
-
-    const login = (token: string, user: User) => {
-        authService.setAuth(token, user);
-        setAuthState({
-            isAuthenticated: true,
-            user,
-            token,
-            loading: false
-        });
     };
 
+    // Logout function
     const logout = () => {
         authService.logout();
-        setAuthState({
-            isAuthenticated: false,
-            user: null,
-            token: null,
-            loading: false
-        });
+        setUser(null);
+        setIsAuthenticated(false);
     };
 
-    const refreshAuth = async () => {
-        try {
-            const token = authService.getToken();
-            if (token) {
-                const isValid = await authService.checkAuth();
-                if (isValid) {
-                    const user = authService.getUser();
-                    if (user) {
-                        setAuthState({
-                            isAuthenticated: true,
-                            user,
-                            token,
-                            loading: false
-                        });
-                    }
-                } else {
-                    logout();
-                }
-            }
-        } catch (error) {
-            console.error('Error refreshing authentication:', error);
-            logout();
+    // Update user function
+    const updateUser = (userData: User) => {
+        const token = authService.getToken();
+        if (token) {
+            authService.setAuth(token, userData);
         }
+        setUser(userData);
     };
 
-    const updateUser = (user: User) => {
-        if (authState.token) {
-            authService.setAuth(authState.token, user);
-            setAuthState(prev => ({
-                ...prev,
-                user
-            }));
-        }
+    // Check if user is authenticated
+    const checkAuth = async () => {
+        const isAuth = await authService.checkAuth();
+        setIsAuthenticated(isAuth);
+        return isAuth;
     };
 
     const value: AuthContextType = {
-        ...authState,
+        user,
+        isAuthenticated,
+        loading,
         login,
         logout,
-        refreshAuth,
-        updateUser
+        updateUser,
+        checkAuth,
+        authService
     };
 
     return (
@@ -133,26 +98,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
-
-// Hook for protected routes
-export const useRequireAuth = (redirectTo: string = '/login') => {
-    const { isAuthenticated, loading } = useAuth();
-
-    useEffect(() => {
-        if (!loading && !isAuthenticated) {
-            window.location.href = redirectTo;
-        }
-    }, [isAuthenticated, loading, redirectTo]);
-
-    return { isAuthenticated, loading };
 };
 

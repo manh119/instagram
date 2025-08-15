@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/authService';
 
 interface OAuth2RedirectProps {
@@ -14,6 +16,8 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
 }) => {
     const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [message, setMessage] = useState('Processing authentication...');
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleRedirect = async () => {
@@ -24,15 +28,18 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
                 if (result) {
                     const { token, user } = result;
 
+                    // Call the login function from AuthContext to update the state
+                    await login(user, token);
+
                     // Call success callback
                     onSuccess?.(token, user);
 
                     setStatus('success');
                     setMessage('Authentication successful! Redirecting...');
 
-                    // Redirect after a short delay
+                    // Redirect after a short delay using React Router
                     setTimeout(() => {
-                        window.location.href = redirectTo;
+                        navigate(redirectTo);
                     }, 1500);
                 } else {
                     // Check for error parameters
@@ -47,9 +54,9 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
 
                         onError?.(errorMsg);
 
-                        // Redirect after error
+                        // Redirect after error using React Router
                         setTimeout(() => {
-                            window.location.href = redirectTo;
+                            navigate(redirectTo);
                         }, 3000);
                     } else {
                         setStatus('error');
@@ -57,9 +64,9 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
 
                         onError?.('Authentication failed');
 
-                        // Redirect after error
+                        // Redirect after error using React Router
                         setTimeout(() => {
-                            window.location.href = redirectTo;
+                            navigate(redirectTo);
                         }, 3000);
                     }
                 }
@@ -70,15 +77,15 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
 
                 onError?.('Unexpected error');
 
-                // Redirect after error
+                // Redirect after error using React Router
                 setTimeout(() => {
-                    window.location.href = redirectTo;
+                    navigate(redirectTo);
                 }, 3000);
             }
         };
 
         handleRedirect();
-    }, [onSuccess, onError, redirectTo]);
+    }, [onSuccess, onError, redirectTo, login, navigate]);
 
     const getStatusIcon = () => {
         switch (status) {
@@ -189,7 +196,7 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
 
                 {status === 'error' && (
                     <button
-                        onClick={() => window.location.href = redirectTo}
+                        onClick={() => navigate(redirectTo)}
                         style={{
                             padding: '10px 20px',
                             backgroundColor: '#3498db',
@@ -203,6 +210,52 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
                         Go Back
                     </button>
                 )}
+
+                {/* Test button for debugging */}
+                <button
+                    onClick={async () => {
+                        try {
+                            const mockUser = {
+                                uid: 'test-user',
+                                username: 'testuser',
+                                fullName: 'Test User',
+                                name: 'Test User',
+                                provider: 'test',
+                                email: 'test@example.com',
+                                picture: '/profilepic.png',
+                                profilePicURL: '/profilepic.png',
+                                bio: 'Test user for debugging',
+                                followers: [],
+                                following: []
+                            };
+                            const mockToken = 'test.jwt.token';
+
+                            await login(mockUser, mockToken);
+                            setStatus('success');
+                            setMessage('Test login successful! Redirecting...');
+
+                            setTimeout(() => {
+                                navigate(redirectTo);
+                            }, 1500);
+                        } catch (error) {
+                            console.error('Test login error:', error);
+                            setStatus('error');
+                            setMessage('Test login failed: ' + error.message);
+                        }
+                    }}
+                    style={{
+                        marginTop: '20px',
+                        padding: '10px 20px',
+                        backgroundColor: '#9b59b6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                    }}
+                >
+                    Test Login (Debug)
+                </button>
             </div>
 
             <style>{`

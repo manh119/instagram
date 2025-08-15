@@ -20,17 +20,17 @@ import { MdDelete } from "react-icons/md";
 import Comment from "../Comment/Comment";
 import PostFooter from "../FeedPosts/PostFooter";
 import useUserProfileStore from "../../store/userProfileStore";
-import useAuthStore from "../../store/authStore";
+import { useAuth } from "../../contexts/AuthContext";
 import useShowToast from "../../hooks/useShowToast";
 import { useState } from "react";
 import { deletePostMock } from "../../services/mockData";
 import usePostStore from "../../store/postStore";
 import Caption from "../Comment/Caption";
 
-const ProfilePost = ({ post }) => {
+const ProfilePost = ({ post, isProfilePage }) => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const userProfile = useUserProfileStore((state) => state.userProfile);
-	const authUser = useAuthStore((state) => state.user);
+	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
 	const [isDeleting, setIsDeleting] = useState(false);
 	const deletePost = usePostStore((state) => state.deletePost);

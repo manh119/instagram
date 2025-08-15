@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useAuthStore from "../store/authStore";
+import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
 import { updateUserMock } from "../services/mockData";
 import useUserProfileStore from "../store/userProfileStore";
@@ -7,12 +7,9 @@ import useUserProfileStore from "../store/userProfileStore";
 
 const useEditProfile = () => {
 	const [isUpdating, setIsUpdating] = useState(false);
-
-	const authUser = useAuthStore((state) => state.user);
-	const setAuthUser = useAuthStore((state) => state.setUser);
-	const setUserProfile = useUserProfileStore((state) => state.setUserProfile);
-
+	const { user: authUser, updateUser: setAuthUser } = useAuth();
 	const showToast = useShowToast();
+	const { userProfile, setUserProfile } = useUserProfileStore();
 
 	const editProfile = async (inputs, selectedFile) => {
 		if (isUpdating || !authUser) return;

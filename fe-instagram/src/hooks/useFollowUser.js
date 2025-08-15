@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import useAuthStore from "../store/authStore";
+import { useAuth } from "../contexts/AuthContext";
 import useUserProfileStore from "../store/userProfileStore";
 import useShowToast from "./useShowToast";
 import { followToggleMock } from "../services/mockData";
@@ -7,10 +7,9 @@ import { followToggleMock } from "../services/mockData";
 const useFollowUser = (userId) => {
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [isFollowing, setIsFollowing] = useState(false);
-	const authUser = useAuthStore((state) => state.user);
-	const setAuthUser = useAuthStore((state) => state.setUser);
-	const { userProfile, setUserProfile } = useUserProfileStore();
+	const { user: authUser, updateUser: setAuthUser } = useAuth();
 	const showToast = useShowToast();
+	const { userProfile, setUserProfile } = useUserProfileStore();
 
 	const handleFollowUser = async () => {
 		setIsUpdating(true);

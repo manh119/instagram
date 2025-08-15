@@ -2,11 +2,18 @@
 // This service handles authentication state, JWT tokens, and OAuth2 flows
 
 export interface User {
+    uid: string;
     username: string;
+    fullName?: string;
     name?: string;
     picture?: string;
+    profilePicURL?: string;
+    bio?: string;
+    email?: string;
     provider?: string;
     providerId?: string;
+    followers?: User[];
+    following?: User[];
 }
 
 export interface AuthState {
@@ -19,7 +26,7 @@ export interface AuthState {
 class AuthService {
     private tokenKey = 'authToken';
     private userKey = 'authUser';
-    private baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+    private baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
     // Get current authentication state
     getAuthState(): AuthState {
@@ -180,9 +187,18 @@ class AuthService {
 
         if (token && username) {
             const user: User = {
+                uid: username, // Use username as uid for now
                 username,
-                provider,
-                providerId: urlParams.get('providerId') || undefined
+                fullName: username, // Use username as fullName for now
+                name: username,
+                provider: provider || undefined,
+                providerId: urlParams.get('providerId') || undefined,
+                email: urlParams.get('email') || undefined,
+                picture: urlParams.get('picture') || undefined,
+                profilePicURL: urlParams.get('picture') || undefined,
+                bio: '',
+                followers: [],
+                following: []
             };
 
             // Store authentication data
@@ -256,7 +272,4 @@ class AuthService {
 
 // Create singleton instance
 export const authService = new AuthService();
-
-// Export types
-export type { AuthState, User };
 

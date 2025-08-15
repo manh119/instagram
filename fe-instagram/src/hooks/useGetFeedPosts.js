@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import usePostStore from "../store/postStore";
-import useAuthStore from "../store/authStore";
+import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
 import useUserProfileStore from "../store/userProfileStore";
 import { listPostsByCreators } from "../services/mockData";
@@ -8,7 +8,7 @@ import { listPostsByCreators } from "../services/mockData";
 const useGetFeedPosts = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const { posts, setPosts } = usePostStore();
-	const authUser = useAuthStore((state) => state.user);
+	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
 	const { setUserProfile } = useUserProfileStore();
 

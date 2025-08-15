@@ -21,7 +21,7 @@ import { BsFillImageFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import usePreviewImg from "../../hooks/usePreviewImg";
 import useShowToast from "../../hooks/useShowToast";
-import useAuthStore from "../../store/authStore";
+import { useAuth } from "../../contexts/AuthContext";
 import usePostStore from "../../store/postStore";
 import useUserProfileStore from "../../store/userProfileStore";
 import { useLocation } from "react-router-dom";
@@ -33,6 +33,7 @@ const CreatePost = () => {
 	const imageRef = useRef(null);
 	const { handleImageChange, selectedFile, setSelectedFile } = usePreviewImg();
 	const showToast = useShowToast();
+	const { user: authUser } = useAuth();
 	const { isLoading, handleCreatePost } = useCreatePost();
 
 	const handlePostCreation = async () => {
@@ -122,7 +123,6 @@ export default CreatePost;
 function useCreatePost() {
 	const showToast = useShowToast();
 	const [isLoading, setIsLoading] = useState(false);
-	const authUser = useAuthStore((state) => state.user);
 	const createPost = usePostStore((state) => state.createPost);
 	const addPost = useUserProfileStore((state) => state.addPost);
 	const userProfile = useUserProfileStore((state) => state.userProfile);

@@ -6,6 +6,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { extendTheme } from "@chakra-ui/react";
 import { mode } from "@chakra-ui/theme-tools";
 import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const styles = {
 	global: (props) => ({
@@ -28,7 +29,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 	<React.StrictMode>
 		<BrowserRouter>
 			<ChakraProvider theme={theme}>
-				<App />
+				<AuthProvider>
+					<App />
+				</AuthProvider>
 			</ChakraProvider>
 		</BrowserRouter>
 	</React.StrictMode>

@@ -2,7 +2,7 @@ import { Box, Flex, Image, Text, VStack } from "@chakra-ui/react";
 import { useState } from "react";
 import Login from "./Login";
 import Signup from "./Signup";
-import GoogleLogin from "../auth/GoogleLogin";
+import { GoogleLogin } from "../auth/GoogleLogin";
 
 const AuthForm = () => {
 	const [isLogin, setIsLogin] = useState(true);

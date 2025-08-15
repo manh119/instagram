@@ -1,12 +1,12 @@
 import { Avatar, AvatarGroup, Button, Flex, Text, VStack, useDisclosure } from "@chakra-ui/react";
 import useUserProfileStore from "../../store/userProfileStore";
-import useAuthStore from "../../store/authStore";
+import { useAuth } from "../../contexts/AuthContext";
 import EditProfile from "./EditProfile";
 import useFollowUser from "../../hooks/useFollowUser";
 
 const ProfileHeader = () => {
 	const { userProfile } = useUserProfileStore();
-	const authUser = useAuthStore((state) => state.user);
+	const { user: authUser } = useAuth();
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(userProfile?.uid);
 	const visitingOwnProfileAndAuth = authUser && authUser.username === userProfile.username;

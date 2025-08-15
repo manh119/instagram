@@ -1,14 +1,23 @@
-import { useState } from "react";
-import useAuthStore from "../store/authStore";
+import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
+import usePostStore from "../store/postStore";
 import { toggleLikeMock } from "../services/mockData";
 
 const useLikePost = (post) => {
+	const [likes, setLikes] = useState(post.likes);
+	const [isLiked, setIsLiked] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
-	const authUser = useAuthStore((state) => state.user);
-	const [likes, setLikes] = useState(post.likes.length);
-	const [isLiked, setIsLiked] = useState(post.likes.includes(authUser?.uid));
+	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
+	const { posts, setPosts } = usePostStore();
+
+	// Initialize isLiked state based on whether the current user has liked the post
+	useEffect(() => {
+		if (authUser && post.likes) {
+			setIsLiked(post.likes.includes(authUser.uid));
+		}
+	}, [authUser, post.likes]);
 
 	const handleLikePost = async () => {
 		if (isUpdating) return;
@@ -16,9 +25,9 @@ const useLikePost = (post) => {
 		setIsUpdating(true);
 
 		try {
-			toggleLikeMock(post.id, authUser.uid);
+			const updatedPost = toggleLikeMock(post.id, authUser.uid);
 			setIsLiked(!isLiked);
-			isLiked ? setLikes(likes - 1) : setLikes(likes + 1);
+			setLikes(updatedPost.likes.length);
 		} catch (error) {
 			showToast("Error", error.message, "error");
 		} finally {

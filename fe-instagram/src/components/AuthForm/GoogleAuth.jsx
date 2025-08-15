@@ -1,12 +1,12 @@
 import { Flex, Image, Text } from "@chakra-ui/react";
 import useShowToast from "../../hooks/useShowToast";
-import useAuthStore from "../../store/authStore";
+import { useAuth } from "../../contexts/AuthContext";
 import { findUserByUid, createUserMock } from "../../services/mockData";
 
 const GoogleAuth = ({ prefix }) => {
 	const error = null;
 	const showToast = useShowToast();
-	const loginUser = useAuthStore((state) => state.login);
+	const { login } = useAuth();
 
 	const handleGoogleAuth = async () => {
 		try {
@@ -17,8 +17,9 @@ const GoogleAuth = ({ prefix }) => {
 				fullName: "Mock Google User",
 			});
 			const user = findUserByUid(cred.user.uid);
+			const mockToken = "mock.jwt.token.for.testing";
 			localStorage.setItem("user-info", JSON.stringify(user));
-			loginUser(user);
+			await login(user, mockToken);
 		} catch (error) {
 			showToast("Error", error.message, "error");
 		}

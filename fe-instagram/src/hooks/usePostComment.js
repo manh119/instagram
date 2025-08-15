@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
-import useAuthStore from "../store/authStore";
-import { addCommentMock } from "../services/mockData";
 import usePostStore from "../store/postStore";
+import useUserProfileStore from "../store/userProfileStore";
+import { addCommentMock } from "../services/mockData";
 
 const usePostComment = () => {
 	const [isCommenting, setIsCommenting] = useState(false);
+	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
-	const authUser = useAuthStore((state) => state.user);
+	const { posts, setPosts } = usePostStore();
+	const { userProfile, setUserProfile } = useUserProfileStore();
 	const addComment = usePostStore((state) => state.addComment);
 
 	const handlePostComment = async (postId, comment) => {

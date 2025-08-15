@@ -2,7 +2,7 @@ import { Box, Button, Flex, Input, InputGroup, InputRightElement, Text, useDiscl
 import { useRef, useState } from "react";
 import { CommentLogo, NotificationsLogo, UnlikeLogo } from "../../assets/constants";
 import usePostComment from "../../hooks/usePostComment";
-import useAuthStore from "../../store/authStore";
+import { useAuth } from "../../contexts/AuthContext";
 import useLikePost from "../../hooks/useLikePost";
 import { timeAgo } from "../../utils/timeAgo";
 import CommentsModal from "../Modals/CommentsModal";
@@ -10,7 +10,7 @@ import CommentsModal from "../Modals/CommentsModal";
 const PostFooter = ({ post, isProfilePage, creatorProfile }) => {
 	const { isCommenting, handlePostComment } = usePostComment();
 	const [comment, setComment] = useState("");
-	const authUser = useAuthStore((state) => state.user);
+	const { user: authUser } = useAuth();
 	const commentRef = useRef(null);
 	const { handleLikePost, isLiked, likes } = useLikePost(post);
 	const { isOpen, onOpen, onClose } = useDisclosure();
