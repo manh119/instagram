@@ -6,9 +6,11 @@ import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.repository.UserRepository;
 import com.engineerpro.example.redis.repository.ProfileRepository;
 import com.engineerpro.example.redis.security.JwtTokenUtil;
+import com.engineerpro.example.redis.util.LoggingUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,8 @@ import java.util.UUID;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    private static final Logger logger = LoggingUtil.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
     @Value("${app.oauth2.redirect-uri:http://localhost:5173/oauth2/redirect}")
     private String redirectUri;
@@ -44,31 +48,31 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityConfig.CustomOAuth2User oauth2User = (SecurityConfig.CustomOAuth2User) authentication.getPrincipal();
             
             // Log OAuth2 user details
-            System.out.println("=== OAuth2 Authentication Success ===");
-            System.out.println("Email: " + oauth2User.getEmail());
-            System.out.println("Provider: " + oauth2User.getProvider());
-            System.out.println("Provider ID: " + oauth2User.getProviderId());
-            System.out.println("Display Name: " + oauth2User.getDisplayName());
+            LoggingUtil.logBusinessEvent(logger, "OAuth2 Authentication Success", 
+                "Email", oauth2User.getEmail(),
+                "Provider", oauth2User.getProvider(),
+                "Provider ID", oauth2User.getProviderId(),
+                "Display Name", oauth2User.getDisplayName());
             
             // Process OAuth2 user and create/update user in database
             User user = processOAuth2User(oauth2User);
             
             // Log processed user details
-            System.out.println("=== Processed User ===");
-            System.out.println("User ID: " + user.getId());
-            System.out.println("Username: " + user.getUsername());
-            System.out.println("Name: " + user.getName());
-            System.out.println("Provider: " + user.getProvider());
-            System.out.println("Provider ID: " + user.getProviderId());
-            System.out.println("Enabled: " + user.isEnabled());
+            LoggingUtil.logBusinessEvent(logger, "User Processed Successfully", 
+                "User ID", user.getId(),
+                "Username", user.getUsername(),
+                "Name", user.getName(),
+                "Provider", user.getProvider(),
+                "Provider ID", user.getProviderId(),
+                "Enabled", user.isEnabled());
             
             // Generate JWT token
             String token = jwtTokenUtil.generateToken(user.getUsername(), oauth2User.getProvider(), oauth2User.getProviderId());
             
-            // Log JWT token details
-            System.out.println("=== JWT Token ===");
-            System.out.println("Token: " + token);
-            System.out.println("Username in token: " + user.getUsername());
+            // Log JWT token details (without exposing the actual token)
+            LoggingUtil.logServiceDebug(logger, "JWT Token Generated", 
+                "Username", user.getUsername(),
+                "Token Length", token.length());
             
             // Redirect to frontend with token
             String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
@@ -77,13 +81,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .queryParam("provider", oauth2User.getProvider())
                     .build().toUriString();
             
-            System.out.println("=== Redirect URL ===");
-            System.out.println("Target URL: " + targetUrl);
+            LoggingUtil.logServiceDebug(logger, "Redirecting to Frontend", "Target URL", targetUrl);
             
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } else {
-            System.out.println("=== OAuth2 Authentication Failed ===");
-            System.out.println("Principal type: " + (authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getName() : "null"));
+            LoggingUtil.logServiceWarning(logger, "OAuth2 Authentication Failed", 
+                "Principal Type", authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getName() : "null");
             super.onAuthenticationSuccess(request, response, authentication);
         }
     }
@@ -93,31 +96,35 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String provider = oauth2User.getProvider();
         String providerId = oauth2User.getProviderId();
         
-        System.out.println("=== Processing OAuth2 User ===");
-        System.out.println("Email: " + email);
-        System.out.println("Provider: " + provider);
-        System.out.println("Provider ID: " + providerId);
+        LoggingUtil.logServiceDebug(logger, "Processing OAuth2 User", 
+            "Email", email,
+            "Provider", provider,
+            "Provider ID", providerId);
         
         // Check if user already exists
         Optional<User> existingUser = userRepository.findByProviderAndProviderId(provider, providerId);
         
         if (existingUser.isPresent()) {
             // Update existing user
-            System.out.println("=== Updating Existing User ===");
+            LoggingUtil.logBusinessEvent(logger, "Updating Existing User", 
+                "User ID", existingUser.get().getId(),
+                "Username", existingUser.get().getUsername());
+            
             User user = existingUser.get();
-            System.out.println("Existing User ID: " + user.getId());
-            System.out.println("Existing Username: " + user.getUsername());
             
             user.setName(oauth2User.getDisplayName());
             user.setPicture(oauth2User.getPicture());
             user.setEnabled(true);
             
             User savedUser = userRepository.save(user);
-            System.out.println("Updated User saved successfully");
+            LoggingUtil.logBusinessEvent(logger, "User Updated Successfully", "User ID", savedUser.getId());
             return savedUser;
         } else {
             // Create new user
-            System.out.println("=== Creating New User ===");
+            LoggingUtil.logBusinessEvent(logger, "Creating New User", 
+                "Email", email,
+                "Provider", provider);
+            
             User newUser = new User();
             newUser.setId(UUID.randomUUID());
             newUser.setUsername(email); // Use email as username
@@ -130,15 +137,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             newUser.setAccountNonLocked(true);
             newUser.setCredentialsNonExpired(true);
             
-            System.out.println("New User details:");
-            System.out.println("  ID: " + newUser.getId());
-            System.out.println("  Username: " + newUser.getUsername());
-            System.out.println("  Name: " + newUser.getName());
-            System.out.println("  Provider: " + newUser.getProvider());
-            System.out.println("  Provider ID: " + newUser.getProviderId());
+            LoggingUtil.logServiceDebug(logger, "New User Details", 
+                "ID", newUser.getId(),
+                "Username", newUser.getUsername(),
+                "Name", newUser.getName(),
+                "Provider", newUser.getProvider(),
+                "Provider ID", newUser.getProviderId());
             
             User savedUser = userRepository.save(newUser);
-            System.out.println("New User saved successfully with ID: " + savedUser.getId());
+            LoggingUtil.logBusinessEvent(logger, "New User Created Successfully", "User ID", savedUser.getId());
             
             // Create profile for new user
             Profile profile = Profile.builder()
@@ -149,7 +156,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
             
             profileRepository.save(profile);
-            System.out.println("Profile created successfully");
+            LoggingUtil.logBusinessEvent(logger, "Profile Created Successfully", "User ID", savedUser.getId());
             
             return savedUser;
         }

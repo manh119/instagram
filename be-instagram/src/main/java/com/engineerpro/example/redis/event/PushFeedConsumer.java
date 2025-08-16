@@ -15,16 +15,18 @@ import com.engineerpro.example.redis.repository.NotificationRepository;
 import com.engineerpro.example.redis.service.feed.PostService;
 import com.engineerpro.example.redis.service.profile.FollowerService;
 import com.engineerpro.example.redis.service.profile.ProfileService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
-@Slf4j
 @RabbitListener(queues = MessageQueueConfig.AFTER_CREATE_POST_QUEUE)
 public class PushFeedConsumer {
 
+    private static final Logger logger = LoggingUtil.getLogger(PushFeedConsumer.class);
+    
     @Autowired
     ObjectMapper objectMapper;
 
@@ -45,15 +47,24 @@ public class PushFeedConsumer {
 
     @RabbitHandler
     public void receive(Integer postId) throws JsonMappingException, JsonProcessingException {
-        log.info(" [x] Received '" + postId + "'");
+        LoggingUtil.logBusinessEvent(logger, "Feed update message received", "postId", postId);
+        
+        try {
+            Post post = postService.getPost(postId);
+            LoggingUtil.logServiceDebug(logger, "Post retrieved for feed update", "postId", postId, "creatorId", post.getCreatedBy().getId());
 
-        Post post = postService.getPost(postId);
+            List<UserFollowing> followerList = followerRepository.findByFollowingUserId(post.getCreatedBy().getId());
+            LoggingUtil.logServiceDebug(logger, "Followers found for post creator", "followerCount", followerList.size());
 
-        List<UserFollowing> follwerList = followerRepository.findByFollowingUserId(post.getCreatedBy().getId());
-
-        for (UserFollowing userFollowing : follwerList) {
-            log.info("userFollowing={}", userFollowing);
-            feedRepository.addPostToFeed(post.getId(), userFollowing.getFollowerUserId());
+            for (UserFollowing userFollowing : followerList) {
+                LoggingUtil.logServiceDebug(logger, "Adding post to follower's feed", "followerId", userFollowing.getFollowerUserId(), "postId", postId);
+                feedRepository.addPostToFeed(post.getId(), userFollowing.getFollowerUserId());
+            }
+            
+            LoggingUtil.logBusinessEvent(logger, "Feed update completed successfully", "postId", postId, "followerCount", followerList.size());
+        } catch (Exception e) {
+            LoggingUtil.logServiceWarning(logger, "Failed to process feed update", "postId", postId, "Error", e.getMessage());
+            throw e;
         }
     }
 }

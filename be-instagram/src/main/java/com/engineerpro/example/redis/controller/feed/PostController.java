@@ -21,55 +21,117 @@ import com.engineerpro.example.redis.dto.feed.GetPostResponse;
 import com.engineerpro.example.redis.dto.feed.GetUserPostResponse;
 import com.engineerpro.example.redis.model.Post;
 import com.engineerpro.example.redis.service.feed.PostService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 @RestController
-@Slf4j
 @RequestMapping(path = "/posts")
 public class PostController {
+  
+  private static final Logger logger = LoggingUtil.getLogger(PostController.class);
+  
   @Autowired
   private PostService postService;
 
   @PostMapping()
   public ResponseEntity<CreatePostResponse> createPost(
       @Valid @RequestBody CreatePostRequest request, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.createPost(userPrincipal, request);
-    return ResponseEntity.ok().body(CreatePostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "createPost", "request", request, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      Post post = postService.createPost(userPrincipal, request);
+      CreatePostResponse response = CreatePostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "createPost", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "createPost", e);
+      throw e;
+    }
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<GetPostResponse> getPost(@PathVariable int id) {
-    Post post = postService.getPost(id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "getPost", "postId", id);
+    
+    try {
+      Post post = postService.getPost(id);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "getPost", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getPost", e);
+      throw e;
+    }
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<DeletePostResponse> deletePost(@PathVariable int id, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    postService.deletePost(userPrincipal, id);
-    return ResponseEntity.ok().build();
+    LoggingUtil.logControllerEntry(logger, "deletePost", "postId", id, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      postService.deletePost(userPrincipal, id);
+      
+      LoggingUtil.logControllerExit(logger, "deletePost", "Post deleted successfully");
+      return ResponseEntity.ok().build();
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "deletePost", e);
+      throw e;
+    }
   }
 
   @PostMapping("/like/{id}")
   public ResponseEntity<GetPostResponse> likePost(@PathVariable int id, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.likePost(userPrincipal, id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "likePost", "postId", id, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      Post post = postService.likePost(userPrincipal, id);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "likePost", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "likePost", e);
+      throw e;
+    }
   }
 
   @DeleteMapping("/like/{id}")
   public ResponseEntity<GetPostResponse> unlikePost(@PathVariable int id, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.unlikePost(userPrincipal, id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "unlikePost", "postId", id, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      Post post = postService.unlikePost(userPrincipal, id);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "unlikePost", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "unlikePost", e);
+      throw e;
+    }
   }
 
   @GetMapping("/user/{id}")
   public ResponseEntity<GetUserPostResponse> getUserPosts(@PathVariable int id) {
-    List<Post> posts = postService.getUserPosts(id);
-    return ResponseEntity.ok().body(GetUserPostResponse.builder().posts(posts).build());
+    LoggingUtil.logControllerEntry(logger, "getUserPosts", "userId", id);
+    
+    try {
+      List<Post> posts = postService.getUserPosts(id);
+      GetUserPostResponse response = GetUserPostResponse.builder().posts(posts).build();
+      
+      LoggingUtil.logControllerExit(logger, "getUserPosts", "Posts count: " + posts.size());
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getUserPosts", e);
+      throw e;
+    }
   }
 }

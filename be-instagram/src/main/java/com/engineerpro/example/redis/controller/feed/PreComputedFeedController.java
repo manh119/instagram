@@ -11,13 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 import com.engineerpro.example.redis.dto.UserPrincipal;
 import com.engineerpro.example.redis.dto.feed.GetFeedResponse;
 import com.engineerpro.example.redis.service.feed.FeedService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 @RestController
-@Slf4j
 @RequestMapping(path = "/precomputed-feeds")
 public class PreComputedFeedController {
+  
+  private static final Logger logger = LoggingUtil.getLogger(PreComputedFeedController.class);
+  
   private FeedService feedService;
 
   public PreComputedFeedController(@Qualifier("precomputedFeedService") FeedService feedService) {
@@ -27,9 +30,18 @@ public class PreComputedFeedController {
   @GetMapping()
   public ResponseEntity<GetFeedResponse> getFeed(@RequestParam("page") int page,
       @RequestParam("limit") int limit, Authentication authentication) {
-    log.info("page={}, limit={}", page, limit);
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    GetFeedResponse response = feedService.getFeed(userPrincipal, limit, page);
-    return ResponseEntity.ok().body(response);
+    
+    LoggingUtil.logControllerEntry(logger, "getFeed", "page", page, "limit", limit, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      GetFeedResponse response = feedService.getFeed(userPrincipal, limit, page);
+      
+      LoggingUtil.logControllerExit(logger, "getFeed", "Feed retrieved successfully");
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getFeed", e);
+      throw e;
+    }
   }
 }

@@ -15,29 +15,52 @@ import com.engineerpro.example.redis.dto.feed.CreateCommentRequest;
 import com.engineerpro.example.redis.dto.feed.GetPostResponse;
 import com.engineerpro.example.redis.model.Post;
 import com.engineerpro.example.redis.service.feed.CommentService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 @RestController
-@Slf4j
 @RequestMapping(path = "/comments")
 public class CommentController {
+  
+  private static final Logger logger = LoggingUtil.getLogger(CommentController.class);
+  
   @Autowired
   CommentService commentService;
 
   @PostMapping()
   public ResponseEntity<GetPostResponse> createComment(
       @Valid @RequestBody CreateCommentRequest request, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = commentService.createComment(userPrincipal, request);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "createComment", "request", request, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      Post post = commentService.createComment(userPrincipal, request);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "createComment", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "createComment", e);
+      throw e;
+    }
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<GetPostResponse> deleteComment(@PathVariable int id, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = commentService.deleteComment(userPrincipal, id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    LoggingUtil.logControllerEntry(logger, "deleteComment", "commentId", id, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      Post post = commentService.deleteComment(userPrincipal, id);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "deleteComment", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "deleteComment", e);
+      throw e;
+    }
   }
 }

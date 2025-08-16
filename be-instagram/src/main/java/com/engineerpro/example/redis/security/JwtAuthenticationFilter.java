@@ -1,10 +1,12 @@
 package com.engineerpro.example.redis.security;
 
 import com.engineerpro.example.redis.service.CustomUserDetailsService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +20,8 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggingUtil.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -33,36 +37,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt)) {
-                System.out.println("=== JWT Filter Processing ===");
-                System.out.println("JWT Token: " + jwt);
-                System.out.println("Request URI: " + request.getRequestURI());
+                LoggingUtil.logServiceDebug(logger, "JWT Filter Processing", "Request URI", request.getRequestURI());
                 
                 if (jwtTokenUtil.validateToken(jwt)) {
                     String username = jwtTokenUtil.extractUsername(jwt);
-                    System.out.println("JWT Token valid, username: " + username);
+                    LoggingUtil.logServiceDebug(logger, "JWT Token validated", "Username", username);
                     
                     try {
                         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        System.out.println("User details loaded successfully: " + userDetails.getUsername());
+                        LoggingUtil.logServiceDebug(logger, "User details loaded", "Username", userDetails.getUsername());
                         
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        System.out.println("Authentication set in security context");
+                        LoggingUtil.logServiceDebug(logger, "Authentication set in security context", "Username", username);
                     } catch (Exception e) {
-                        System.out.println("Error loading user details: " + e.getMessage());
-                        e.printStackTrace();
+                        LoggingUtil.logServiceWarning(logger, "Error loading user details", "Username", username, "Error", e.getMessage());
+                        logger.error("Could not load user details", e);
                     }
                 } else {
-                    System.out.println("JWT Token validation failed");
+                    LoggingUtil.logServiceWarning(logger, "JWT Token validation failed", "Request URI", request.getRequestURI());
                 }
             } else {
-                System.out.println("No JWT token found in request");
+                LoggingUtil.logServiceDebug(logger, "No JWT token found in request", "Request URI", request.getRequestURI());
             }
         } catch (Exception ex) {
-            System.out.println("JWT Filter error: " + ex.getMessage());
+            LoggingUtil.logServiceWarning(logger, "JWT Filter error", "Request URI", request.getRequestURI(), "Error", ex.getMessage());
             logger.error("Could not set user authentication in security context", ex);
         }
 

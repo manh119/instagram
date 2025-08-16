@@ -21,16 +21,19 @@ import com.engineerpro.example.redis.dto.profile.GetFollowingResponse;
 import com.engineerpro.example.redis.dto.profile.UnFollowUserResponse;
 import com.engineerpro.example.redis.dto.profile.UnfollowUserRequest;
 import com.engineerpro.example.redis.service.profile.FollowerService;
+import com.engineerpro.example.redis.util.LoggingUtil;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 @RestController
-@Slf4j
 @RequestMapping(path = "/follow")
 @Validated
 public class FollowerController {
+  
+  private static final Logger logger = LoggingUtil.getLogger(FollowerController.class);
+  
   @Autowired
   FollowerService followerService;
 
@@ -38,30 +41,68 @@ public class FollowerController {
   public ResponseEntity<GetFollowerResponse> getFollowers(@PathVariable int id,
       @RequestParam("page") @Min(1) Integer page,
       @RequestParam("limit") @Min(1) int limit) {
-    log.info("userId={}, page={}, limit={}", id, page, limit);
-    return ResponseEntity.ok().body(followerService.getFollowers(id, page, limit));
+    
+    LoggingUtil.logControllerEntry(logger, "getFollowers", "userId", id, "page", page, "limit", limit);
+    
+    try {
+      GetFollowerResponse response = followerService.getFollowers(id, page, limit);
+      LoggingUtil.logControllerExit(logger, "getFollowers", "Followers retrieved successfully");
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getFollowers", e);
+      throw e;
+    }
   }
 
   @GetMapping("/user/followings/{id}")
   public ResponseEntity<GetFollowingResponse> getFollowing(@PathVariable int id, @RequestParam("page") @Min(1) int page,
       @RequestParam("limit") @Min(1) int limit) {
-    log.info("userId={}, page={}, limit={}", id, page, limit);
-    return ResponseEntity.ok().body(followerService.getFollowings(id, page, limit));
+    
+    LoggingUtil.logControllerEntry(logger, "getFollowing", "userId", id, "page", page, "limit", limit);
+    
+    try {
+      GetFollowingResponse response = followerService.getFollowings(id, page, limit);
+      LoggingUtil.logControllerExit(logger, "getFollowing", "Followings retrieved successfully");
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getFollowing", e);
+      throw e;
+    }
   }
 
   @PostMapping()
   public ResponseEntity<FollowUserResponse> folowUser(
       @Valid @RequestBody FollowUserRequest request, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    followerService.folowUser(userPrincipal, request.getProfileId());
-    return ResponseEntity.ok().build();
+    
+    LoggingUtil.logControllerEntry(logger, "followUser", "request", request, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      followerService.folowUser(userPrincipal, request.getProfileId());
+      
+      LoggingUtil.logControllerExit(logger, "followUser", "User followed successfully");
+      return ResponseEntity.ok().build();
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "followUser", e);
+      throw e;
+    }
   }
 
   @DeleteMapping()
   public ResponseEntity<UnFollowUserResponse> unfolowUser(
       @Valid @RequestBody UnfollowUserRequest request, Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    followerService.unfolowUser(userPrincipal, request.getProfileId());
-    return ResponseEntity.ok().build();
+    
+    LoggingUtil.logControllerEntry(logger, "unfollowUser", "request", request, "authentication", authentication != null ? "present" : "null");
+    
+    try {
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      followerService.unfolowUser(userPrincipal, request.getProfileId());
+      
+      LoggingUtil.logControllerExit(logger, "unfollowUser", "User unfollowed successfully");
+      return ResponseEntity.ok().build();
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "unfollowUser", e);
+      throw e;
+    }
   }
 }
