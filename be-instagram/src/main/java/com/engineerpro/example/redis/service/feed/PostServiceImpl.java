@@ -19,6 +19,7 @@ import com.engineerpro.example.redis.service.UploadService;
 import com.engineerpro.example.redis.service.profile.ProfileService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.engineerpro.example.redis.repository.FeedRepository;
 
 import org.slf4j.Logger;
 
@@ -35,6 +36,9 @@ public class PostServiceImpl implements PostService {
 
   @Autowired
   private PostRepository postRepository;
+
+  @Autowired
+  private FeedRepository feedRepository;
 
   @Autowired
   RabbitTemplate rabbitTemplate;
@@ -100,6 +104,11 @@ public class PostServiceImpl implements PostService {
         throw new NoPermissionException();
       }
       
+      // Remove post from all feeds before deleting
+      LoggingUtil.logServiceDebug(logger, "Removing post from all feeds", "Post ID", postId);
+      feedRepository.removePostFromAllFeeds(postId);
+      
+      // Delete the post (cascade will handle comments and notifications)
       postRepository.delete(post);
       LoggingUtil.logBusinessEvent(logger, "Post deleted successfully", "Post ID", postId, "Username", userPrincipal.getUsername());
     } catch (Exception e) {
@@ -152,7 +161,8 @@ public class PostServiceImpl implements PostService {
     
     try {
       Profile profile = profileService.getUserProfile(userId);
-      List<Post> posts = postRepository.findByCreatedBy(profile);
+      // Use the new method that eagerly loads all relationships
+      List<Post> posts = postRepository.findByCreatedByIdWithAllRelationships(profile.getId());
       
       LoggingUtil.logServiceDebug(logger, "User posts retrieved successfully", "User ID", userId, "Posts Count", posts.size());
       return posts;

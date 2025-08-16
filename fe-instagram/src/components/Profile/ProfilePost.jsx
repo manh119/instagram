@@ -13,6 +13,7 @@ import {
 	Text,
 	VStack,
 	useDisclosure,
+	Box,
 } from "@chakra-ui/react";
 import { AiFillHeart } from "react-icons/ai";
 import { FaComment } from "react-icons/fa";
@@ -23,34 +24,94 @@ import useUserProfileStore from "../../store/userProfileStore";
 import { useAuth } from "../../contexts/AuthContext";
 import useShowToast from "../../hooks/useShowToast";
 import { useState } from "react";
-import { deletePostMock } from "../../services/mockData";
 import usePostStore from "../../store/postStore";
 import Caption from "../Comment/Caption";
+import postService from "../../services/postService";
+import ConfirmDialog from "../Common/ConfirmDialog";
 
-const ProfilePost = ({ post, isProfilePage }) => {
+const ProfilePost = ({ post }) => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const userProfile = useUserProfileStore((state) => state.userProfile);
 	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const deletePost = usePostStore((state) => state.deletePost);
 	const decrementPostsCount = useUserProfileStore((state) => state.deletePost);
 
-	const handleDeletePost = async () => {
-		if (!window.confirm("Are you sure you want to delete this post?")) return;
+	// Debug logging to see post data
+	console.log('ProfilePost - post data:', post);
+	console.log('ProfilePost - authUser:', authUser);
+	console.log('ProfilePost - userProfile:', userProfile);
+
+	// Safely get likes and comments with fallbacks
+	const likesCount = post?.userLikes?.length || post?.likes?.length || 0;
+	const commentsCount = post?.comments?.length || 0;
+	const hasComments = Array.isArray(post?.comments) && post.comments.length > 0;
+
+	// Check if current user can delete this post
+	const canDeletePost = authUser && (
+		// User can delete if they created the post
+		// Check multiple possible field mappings
+		(authUser.uid === post?.createdBy?.userId) ||        // Email matches userId
+		(authUser.uid === post?.createdBy?.username) ||      // Email matches username
+		(authUser.id === post?.createdBy?.id) ||             // ID matches (if exists)
+		(authUser.uid === post?.createdBy?.id) ||            // UID matches ID (if exists)
+		// Or if they're viewing their own profile and the post belongs to them
+		(userProfile && (
+			(authUser.uid === userProfile.userId) ||          // Email matches profile userId
+			(authUser.uid === userProfile.username) ||        // Email matches profile username
+			(authUser.id === userProfile.id) ||               // ID matches (if exists)
+			(authUser.uid === userProfile.id)                 // UID matches ID (if exists)
+		))
+	);
+
+	// Debug logging for delete button visibility
+	console.log('ProfilePost - Delete button debug:', {
+		postId: post?.id,
+		authUserUid: authUser?.uid,
+		postCreatedByUserId: post?.createdBy?.userId,
+		postCreatedByUsername: post?.createdBy?.username,
+		canDeletePost
+	});
+
+	const handleDeleteClick = () => {
+		setShowDeleteConfirm(true);
+	};
+
+	const handleDeleteConfirm = async () => {
+		setShowDeleteConfirm(false);
 		if (isDeleting) return;
 
+		setIsDeleting(true);
+
 		try {
-			deletePostMock(post.id, authUser.uid);
+			console.log('ProfilePost - Deleting post:', post.id);
+
+			// Call the real API to delete the post
+			await postService.deletePost(post.id);
+
+			// Update local state
 			deletePost(post.id);
 			decrementPostsCount(post.id);
+
+			// Close the modal
+			onClose();
+
 			showToast("Success", "Post deleted successfully", "success");
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			console.error('ProfilePost - Error deleting post:', error);
+			showToast("Error", error.message || "Failed to delete post", "error");
 		} finally {
 			setIsDeleting(false);
 		}
 	};
+
+	// Don't render if post is missing required data
+	if (!post || !post.imageUrl) {
+		console.warn('ProfilePost - Missing required post data:', post);
+		return null;
+	}
 
 	return (
 		<>
@@ -64,6 +125,34 @@ const ProfilePost = ({ post, isProfilePage }) => {
 				aspectRatio={1 / 1}
 				onClick={onOpen}
 			>
+				{/* Delete button overlay for grid view */}
+				{canDeletePost && (
+					<Box
+						position="absolute"
+						top={2}
+						right={2}
+						zIndex={2}
+						onClick={(e) => {
+							e.stopPropagation(); // Prevent opening modal when clicking delete
+							handleDeleteClick();
+						}}
+					>
+						<Button
+							size="sm"
+							bg="red.500"
+							color="white"
+							_hover={{ bg: "red.600" }}
+							borderRadius="full"
+							p={2}
+							minW="auto"
+							isLoading={isDeleting}
+							title="Delete post"
+						>
+							<MdDelete size={16} />
+						</Button>
+					</Box>
+				)}
+
 				<Flex
 					opacity={0}
 					_hover={{ opacity: 1 }}
@@ -81,14 +170,14 @@ const ProfilePost = ({ post, isProfilePage }) => {
 						<Flex>
 							<AiFillHeart size={20} />
 							<Text fontWeight={"bold"} ml={2}>
-								{post.likes.length}
+								{likesCount}
 							</Text>
 						</Flex>
 
 						<Flex>
 							<FaComment size={20} />
 							<Text fontWeight={"bold"} ml={2}>
-								{post.comments.length}
+								{commentsCount}
 							</Text>
 						</Flex>
 					</Flex>
@@ -123,21 +212,22 @@ const ProfilePost = ({ post, isProfilePage }) => {
 							<Flex flex={1} flexDir={"column"} px={10} display={{ base: "none", md: "flex" }}>
 								<Flex alignItems={"center"} justifyContent={"space-between"}>
 									<Flex alignItems={"center"} gap={4}>
-										<Avatar src={userProfile.profilePicURL} size={"sm"} name='As a Programmer' />
+										<Avatar src={userProfile?.profilePicURL} size={"sm"} name={userProfile?.username || 'User'} />
 										<Text fontWeight={"bold"} fontSize={12}>
-											{userProfile.username}
+											{userProfile?.username || 'Unknown User'}
 										</Text>
 									</Flex>
 
-									{authUser?.uid === userProfile.uid && (
+									{canDeletePost && (
 										<Button
 											size={"sm"}
 											bg={"transparent"}
 											_hover={{ bg: "whiteAlpha.300", color: "red.600" }}
 											borderRadius={4}
 											p={1}
-											onClick={handleDeletePost}
+											onClick={handleDeleteClick}
 											isLoading={isDeleting}
+											title="Delete post"
 										>
 											<MdDelete size={20} cursor='pointer' />
 										</Button>
@@ -149,7 +239,7 @@ const ProfilePost = ({ post, isProfilePage }) => {
 									{/* CAPTION */}
 									{post.caption && <Caption post={post} />}
 									{/* COMMENTS */}
-									{post.comments.map((comment) => (
+									{hasComments && post.comments.map((comment) => (
 										<Comment key={comment.id} comment={comment} />
 									))}
 								</VStack>
@@ -161,6 +251,19 @@ const ProfilePost = ({ post, isProfilePage }) => {
 					</ModalBody>
 				</ModalContent>
 			</Modal>
+
+			{/* Delete confirmation dialog */}
+			<ConfirmDialog
+				isOpen={showDeleteConfirm}
+				onClose={() => setShowDeleteConfirm(false)}
+				onConfirm={handleDeleteConfirm}
+				title="Delete Post"
+				message="Are you sure you want to delete this post? This action cannot be undone."
+				confirmText="Delete"
+				cancelText="Cancel"
+				confirmColor="red"
+				isLoading={isDeleting}
+			/>
 		</>
 	);
 };

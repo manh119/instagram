@@ -2,20 +2,26 @@ import { Container, Flex, Link, Skeleton, SkeletonCircle, Text, VStack, Grid, Bo
 import ProfileHeader from "../../components/Profile/ProfileHeader";
 import ProfileTabs from "../../components/Profile/ProfileTabs";
 import ProfilePosts from "../../components/Profile/ProfilePosts";
-import useUserProfileStore from "../../store/userProfileStore";
+import { useUserProfileStoreShallow } from "../../store/userProfileStore";
 import { useParams, useLocation } from "react-router-dom";
 import { Link as RouterLink } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import userProfileService from "../../services/userProfileService";
 
 const ProfilePage = ({ isCurrentUser = false }) => {
 	const { id } = useParams();
 	const { user: authUser } = useAuth();
-	const { setUserProfile } = useUserProfileStore();
+	const setUserProfile = useUserProfileStoreShallow((state) => state.setUserProfile);
+	const setUserProfileRef = useRef(setUserProfile);
 	const [isLoading, setIsLoading] = useState(true);
 	const [userProfile, setLocalUserProfile] = useState(null);
 	const location = useLocation();
+
+	// Update ref when setUserProfile changes
+	useEffect(() => {
+		setUserProfileRef.current = setUserProfile;
+	}, [setUserProfile]);
 
 	// Debug logging
 	console.log('ProfilePage - Debug Info:', {
@@ -27,46 +33,48 @@ const ProfilePage = ({ isCurrentUser = false }) => {
 		hasUserProfile: !!userProfile
 	});
 
-	// Fetch profile data
-	useEffect(() => {
-		const fetchProfile = async () => {
-			setIsLoading(true);
-			try {
-				let profile;
+	// Fetch profile data - use useCallback to prevent recreation on every render
+	const fetchProfile = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			let profile;
 
-				if (isCurrentUser) {
-					// Use /profiles/me endpoint for current user
-					console.log('ProfilePage - Fetching current user profile');
-					profile = await userProfileService.getCurrentUserProfile();
-				} else if (id) {
-					// Use /profiles/{id} endpoint for specific user
-					console.log('ProfilePage - Fetching profile by ID:', id);
-					profile = await userProfileService.getUserProfileById(id);
-				} else {
-					console.error('ProfilePage - No ID or current user flag provided');
-					return;
-				}
-
-				console.log('ProfilePage - Profile fetched:', profile);
-				setLocalUserProfile(profile);
-				setUserProfile(profile);
-			} catch (error) {
-				console.error('ProfilePage - Error fetching profile:', error);
-			} finally {
-				setIsLoading(false);
+			if (isCurrentUser) {
+				// Use /profiles/me endpoint for current user
+				console.log('ProfilePage - Fetching current user profile');
+				profile = await userProfileService.getCurrentUserProfile();
+			} else if (id) {
+				// Use /profiles/{id} endpoint for specific user
+				console.log('ProfilePage - Fetching profile by ID:', id);
+				profile = await userProfileService.getUserProfileById(id);
+			} else {
+				console.error('ProfilePage - No ID or current user flag provided');
+				return;
 			}
-		};
 
-		fetchProfile();
-	}, [id, isCurrentUser, setUserProfile]);
-
-	// Update the store when profile data is fetched
-	useEffect(() => {
-		if (userProfile) {
-			console.log('ProfilePage - Updating store with profile:', userProfile);
-			setUserProfile(userProfile);
+			console.log('ProfilePage - Profile fetched:', profile);
+			setLocalUserProfile(profile);
+			// Store update moved outside useCallback to prevent infinite loops
+		} catch (error) {
+			console.error('ProfilePage - Error fetching profile:', error);
+		} finally {
+			setIsLoading(false);
 		}
-	}, [userProfile, setUserProfile]);
+	}, [id, isCurrentUser]); // Using ref for setUserProfile to prevent infinite loops
+
+	// Fetch profile data when dependencies change
+	useEffect(() => {
+		fetchProfile();
+	}, [fetchProfile]);
+
+	// Update store after profile is fetched (separate from fetch logic)
+	useEffect(() => {
+		if (userProfile && setUserProfileRef.current) {
+			console.log('ProfilePage - Updating store with profile:', userProfile);
+			// Temporarily disabled to test if this causes infinite loop
+			// setUserProfileRef.current(userProfile);
+		}
+	}, [userProfile]); // Only depend on userProfile, not the function
 
 	const userNotFound = !isLoading && !userProfile;
 	if (userNotFound) {
