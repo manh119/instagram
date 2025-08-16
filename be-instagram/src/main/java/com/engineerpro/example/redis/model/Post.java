@@ -39,10 +39,10 @@ public class Post {
   @ManyToOne
   @JoinColumn(name = "created_by_id", nullable = false)
   @JsonProperty("createdBy")
-  Profile createdBy;
+  private Profile createdBy;
 
-  String imageUrl;
-  String caption;
+  private String imageUrl;
+  private String caption;
   private Date createdAt;
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -54,5 +54,20 @@ public class Post {
   private List<Notification> notifications;
 
   @ManyToMany
-  Set<Profile> userLikes;
+  @JsonProperty("userLikes")
+  private Set<Profile> userLikes;
+
+  // Custom toString method to avoid circular references
+  @Override
+  public String toString() {
+    return "Post{" +
+        "id=" + id +
+        ", createdBy=" + (createdBy != null ? "Profile(id=" + createdBy.getId() + ", username=" + createdBy.getUsername() + ")" : "null") +
+        ", imageUrl='" + imageUrl + '\'' +
+        ", caption='" + caption + '\'' +
+        ", createdAt=" + createdAt +
+        ", commentsCount=" + (comments != null ? comments.size() : 0) +
+        ", userLikesCount=" + (userLikes != null ? userLikes.size() : 0) +
+        '}';
+  }
 }

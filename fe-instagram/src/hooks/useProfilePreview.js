@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
-const useProfilePreview = (delay = 500) => {
+const useProfilePreview = (delay = 300) => {
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState("bottom-start");
     const timeoutRef = useRef(null);
@@ -20,7 +20,11 @@ const useProfilePreview = (delay = 500) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
-        setIsVisible(false);
+
+        // Add a small delay before hiding to make it easier to move mouse to preview
+        timeoutRef.current = setTimeout(() => {
+            setIsVisible(false);
+        }, 150); // 150ms delay before hiding
     }, []);
 
     const handleMouseEnter = useCallback(() => {

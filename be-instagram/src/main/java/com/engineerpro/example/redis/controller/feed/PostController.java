@@ -69,6 +69,22 @@ public class PostController {
     }
   }
 
+  @GetMapping("/{id}/with-relationships")
+  public ResponseEntity<GetPostResponse> getPostWithRelationships(@PathVariable int id) {
+    LoggingUtil.logControllerEntry(logger, "getPostWithRelationships", "postId", id);
+    
+    try {
+      Post post = postService.getPostWithAllRelationships(id);
+      GetPostResponse response = GetPostResponse.builder().post(post).build();
+      
+      LoggingUtil.logControllerExit(logger, "getPostWithRelationships", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getPostWithRelationships", e);
+      throw e;
+    }
+  }
+
   @DeleteMapping("/{id}")
   public ResponseEntity<DeletePostResponse> deletePost(@PathVariable int id, Authentication authentication) {
     LoggingUtil.logControllerEntry(logger, "deletePost", "postId", id, "authentication", authentication != null ? "present" : "null");
@@ -90,7 +106,23 @@ public class PostController {
     LoggingUtil.logControllerEntry(logger, "likePost", "postId", id, "authentication", authentication != null ? "present" : "null");
     
     try {
+      // Debug authentication details
+      if (authentication != null) {
+        logger.debug("Authentication details - Principal: {}, Authorities: {}, Authenticated: {}, Details: {}", 
+          authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getSimpleName() : "null",
+          authentication.getAuthorities() != null ? authentication.getAuthorities().size() : 0,
+          authentication.isAuthenticated(),
+          authentication.getDetails() != null ? authentication.getDetails().toString() : "null");
+      } else {
+        logger.warn("No authentication found for like request - postId: {}", id);
+      }
+      
       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      logger.debug("UserPrincipal details - Username: {}, Provider: {}, ProviderId: {}", 
+        userPrincipal.getUsername(),
+        userPrincipal.getProvider(),
+        userPrincipal.getProviderId());
+      
       Post post = postService.likePost(userPrincipal, id);
       GetPostResponse response = GetPostResponse.builder().post(post).build();
       
@@ -107,7 +139,23 @@ public class PostController {
     LoggingUtil.logControllerEntry(logger, "unlikePost", "postId", id, "authentication", authentication != null ? "present" : "null");
     
     try {
+      // Debug authentication details
+      if (authentication != null) {
+        logger.debug("Authentication details - Principal: {}, Authorities: {}, Authenticated: {}, Details: {}", 
+          authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getSimpleName() : "null",
+          authentication.getAuthorities() != null ? authentication.getAuthorities().size() : 0,
+          authentication.isAuthenticated(),
+          authentication.getDetails() != null ? authentication.getDetails().toString() : "null");
+      } else {
+        logger.warn("No authentication found for unlike request - postId: {}", id);
+      }
+      
       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      logger.debug("UserPrincipal details - Username: {}, Provider: {}, ProviderId: {}", 
+        userPrincipal.getUsername(),
+        userPrincipal.getProvider(),
+        userPrincipal.getProviderId());
+      
       Post post = postService.unlikePost(userPrincipal, id);
       GetPostResponse response = GetPostResponse.builder().post(post).build();
       

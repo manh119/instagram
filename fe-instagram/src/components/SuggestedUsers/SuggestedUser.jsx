@@ -17,9 +17,6 @@ const SuggestedUser = ({ user }) => {
 							{user.username}
 						</Text>
 					</ProfileHoverTrigger>
-					<Text fontSize={11} color={"gray.light"}>
-						{user.fullName}
-					</Text>
 				</VStack>
 			</Flex>
 			<Button

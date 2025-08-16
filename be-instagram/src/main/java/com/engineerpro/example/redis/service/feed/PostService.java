@@ -11,6 +11,8 @@ public interface PostService {
 
   Post getPost(int postId);
 
+  Post getPostWithAllRelationships(int postId);
+
   void deletePost(UserPrincipal userPrincipal, int postId);
 
   Post likePost(UserPrincipal userPrincipal, int postId);

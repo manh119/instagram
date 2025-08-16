@@ -1,8 +1,15 @@
 import { create } from "zustand";
+import { shallow } from "zustand/shallow";
 
-const useUserProfileStore = create((set) => ({
+const useUserProfileStore = create((set, get) => ({
 	userProfile: null,
-	setUserProfile: (userProfile) => set({ userProfile }),
+	setUserProfile: (userProfile) => {
+		// Only update if the profile actually changed
+		const currentProfile = get().userProfile;
+		if (currentProfile !== userProfile) {
+			set({ userProfile });
+		}
+	},
 	// this is used to update the number of posts in the profile page
 	addPost: (post) =>
 		set((state) => ({
@@ -16,5 +23,9 @@ const useUserProfileStore = create((set) => ({
 			},
 		})),
 }));
+
+// Export a hook that uses shallow comparison to prevent unnecessary re-renders
+export const useUserProfileStoreShallow = (selector) =>
+	useUserProfileStore(selector, shallow);
 
 export default useUserProfileStore;

@@ -10,23 +10,13 @@ const ProfileHoverTrigger = ({
     showPreview = true,
     triggerRef = null
 }) => {
-    // Debug logging
-    console.log('ProfileHoverTrigger - profile data:', {
-        profile,
-        hasProfile: !!profile,
-        username: profile?.username,
-        fullName: profile?.fullName,
-        profilePicURL: profile?.profilePicURL,
-        showPreview
-    });
-
     // Always call the hook to follow React rules
     const previewHook = useProfilePreview();
 
     // Use provided ref or hook ref only when showing previews
     const finalTriggerRef = showPreview && profile ? (triggerRef || previewHook.triggerRef) : null;
 
-    // Early return for cases where no preview is needed
+    // If no profile or preview disabled, just render children
     if (!profile || !showPreview) {
         return linkTo ? (
             <Link to={linkTo}>
@@ -37,6 +27,7 @@ const ProfileHoverTrigger = ({
         );
     }
 
+    // Always render the wrapper with ProfilePreview when profile exists
     const content = (
         <Box
             ref={finalTriggerRef}
@@ -44,10 +35,13 @@ const ProfileHoverTrigger = ({
             onMouseLeave={previewHook.handleMouseLeave}
             position="relative"
             display="inline-block"
+            cursor="pointer"
+            _hover={{ opacity: 0.8 }}
+            transition="opacity 0.2s"
         >
             {children}
 
-            {/* Profile Preview */}
+            {/* ProfilePreview is always rendered when profile exists to prevent hooks order issues */}
             <ProfilePreview
                 profile={profile}
                 isVisible={previewHook.isVisible}

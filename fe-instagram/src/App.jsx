@@ -26,11 +26,31 @@ function App() {
 	return (
 		<PageLayout>
 			<Routes>
-				<Route path='/' element={isAuthenticated ? <HomePage /> : <Navigate to='/auth' />} />
-				<Route path='/auth' element={!isAuthenticated ? <Navigate to='/' /> : <AuthPage />} />
+				{/* Protected routes - only accessible when authenticated */}
+				<Route path='/' element={
+					isAuthenticated ? <HomePage /> : <Navigate to='/auth' replace />
+				} />
+
+				{/* Auth route - only accessible when NOT authenticated */}
+				<Route path='/auth' element={
+					!isAuthenticated ? <AuthPage /> : <Navigate to='/' replace />
+				} />
+
+				{/* OAuth2 redirect route - accessible to all */}
 				<Route path='/oauth2/redirect' element={<OAuth2Redirect />} />
-				<Route path='/profiles/me' element={<ProfilePage isCurrentUser={true} />} />
-				<Route path='/profiles/:id' element={<ProfilePage />} />
+
+				{/* Profile routes - only accessible when authenticated */}
+				<Route path='/profiles/me' element={
+					isAuthenticated ? <ProfilePage isCurrentUser={true} /> : <Navigate to='/auth' replace />
+				} />
+				<Route path='/profiles/:id' element={
+					isAuthenticated ? <ProfilePage /> : <Navigate to='/auth' replace />
+				} />
+
+				{/* Catch all - redirect to appropriate route */}
+				<Route path='*' element={
+					isAuthenticated ? <Navigate to='/' replace /> : <Navigate to='/auth' replace />
+				} />
 			</Routes>
 		</PageLayout>
 	);

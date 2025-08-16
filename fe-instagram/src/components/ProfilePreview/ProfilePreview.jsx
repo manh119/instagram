@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import useFollowUser from "../../hooks/useFollowUser";
 
 const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLeave }) => {
-    const { handleFollowUser, isFollowing, isUpdating } = useFollowUser(profile?.id);
+    // Always call hooks with stable values to prevent hooks order issues
+    const profileId = profile?.id || 0; // Use 0 as fallback to ensure stable hook calls
+    const { handleFollowUser, isFollowing, isUpdating } = useFollowUser(profileId);
 
     // Color mode values
     const bgColor = useColorModeValue('white', 'gray.800');
@@ -11,7 +13,10 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
     const textColor = useColorModeValue('gray.800', 'white');
     const secondaryTextColor = useColorModeValue('gray.600', 'gray.400');
 
-    if (!isVisible || !profile) return null;
+    // Don't render anything if not visible or no profile
+    if (!isVisible || !profile) {
+        return null;
+    }
 
     return (
         <Box
@@ -27,6 +32,7 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
             mr={position.includes('start') ? 0 : 'auto'}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
+            onMouseMove={onMouseEnter} // Keep preview visible while mouse is moving over it
         >
             <Box
                 bg={bgColor}
@@ -81,19 +87,19 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
                 <HStack justify="space-around" mb={4} p={3} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="md">
                     <VStack spacing={0}>
                         <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                            {profile.postsCount || profile.posts?.length || 0}
+                            {profile.postsCount || 0}
                         </Text>
                         <Text fontSize="xs" color={secondaryTextColor}>posts</Text>
                     </VStack>
                     <VStack spacing={0}>
                         <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                            {profile.followersCount || profile.followers?.length || 0}
+                            {profile.followersCount || 0}
                         </Text>
                         <Text fontSize="xs" color={secondaryTextColor}>followers</Text>
                     </VStack>
                     <VStack spacing={0}>
                         <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                            {profile.followingCount || profile.following?.length || 0}
+                            {profile.followingCount || 0}
                         </Text>
                         <Text fontSize="xs" color={secondaryTextColor}>following</Text>
                     </VStack>
@@ -102,29 +108,34 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
                 <Divider mb={4} />
 
                 {/* Actions */}
-                <VStack spacing={2}>
+                <VStack spacing={3}>
                     <Link to={`/profiles/${profile.id}`} style={{ width: '100%' }}>
                         <Button
-                            size="sm"
+                            size="md"
                             variant="outline"
                             colorScheme="blue"
                             w="full"
-                            _hover={{ bg: 'blue.50' }}
+                            _hover={{ bg: 'blue.50', transform: 'scale(1.02)' }}
+                            _active={{ transform: 'scale(0.98)' }}
+                            transition="all 0.2s"
                         >
                             View Profile
                         </Button>
                     </Link>
 
                     <Button
-                        size="sm"
+                        size="md"
                         colorScheme={isFollowing ? "gray" : "blue"}
                         variant={isFollowing ? "outline" : "solid"}
                         w="full"
                         onClick={handleFollowUser}
                         isLoading={isUpdating}
                         _hover={{
-                            bg: isFollowing ? 'gray.100' : 'blue.600'
+                            bg: isFollowing ? 'gray.100' : 'blue.600',
+                            transform: 'scale(1.02)'
                         }}
+                        _active={{ transform: 'scale(0.98)' }}
+                        transition="all 0.2s"
                     >
                         {isFollowing ? "Unfollow" : "Follow"}
                     </Button>

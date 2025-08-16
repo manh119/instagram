@@ -41,7 +41,8 @@ public class PrecomputedFeedServiceImpl implements FeedService {
       List<Long> postIds = feedRepository.getFeed(profile.getId(), limit, page);
       LoggingUtil.logServiceDebug(logger, "Feed post IDs retrieved", "postIdsCount", postIds.size(), "postIds", postIds);
 
-      List<Post> posts = postRepository.findAllById(postIds.stream().map(Long::intValue).toList());
+      // Use the method that eagerly loads profile data
+      List<Post> posts = postRepository.findByIdInWithProfile(postIds.stream().map(Long::intValue).toList());
       LoggingUtil.logServiceDebug(logger, "Posts retrieved from repository", "postsCount", posts.size());
 
       Long totalPost = feedRepository.getFeedSize(profile.getId());

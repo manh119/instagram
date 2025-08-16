@@ -60,8 +60,9 @@ public class DynamicFeedServiceImpl implements FeedService {
         int adjustedPage = Math.max(0, page);
         int offset = adjustedPage * limit;
         
-        List<Post> posts = postRepository.findByCreatedBy(profile);
-        // Apply pagination manually since findByCreatedBy(Profile) doesn't support pagination
+        // Use the method that eagerly loads profile data
+        List<Post> posts = postRepository.findByCreatedByIdWithProfile(profile.getId());
+        // Apply pagination manually since findByCreatedByIdWithProfile doesn't support pagination
         int startIndex = Math.min(offset, posts.size());
         int endIndex = Math.min(startIndex + limit, posts.size());
         List<Post> paginatedPosts = posts.subList(startIndex, endIndex);
@@ -85,15 +86,20 @@ public class DynamicFeedServiceImpl implements FeedService {
       
       LoggingUtil.logServiceDebug(logger, "Dynamic feed pagination", "page", page, "adjustedPage", adjustedPage, "limit", limit, "offset", offset, "totalPage", totalPage);
 
-      List<Post> posts = postRepository
-          .findByCreatedBy(allProfileIds, limit, offset);
+      // Use the new method that eagerly loads profile data
+      List<Post> posts = postRepository.findByCreatedByProfileIdsWithProfile(allProfileIds);
+      
+      // Apply pagination manually since the new method doesn't support pagination
+      int startIndex = Math.min(offset, posts.size());
+      int endIndex = Math.min(startIndex + limit, posts.size());
+      List<Post> paginatedPosts = posts.subList(startIndex, endIndex);
 
-      LoggingUtil.logServiceDebug(logger, "Posts retrieved for dynamic feed", "postsCount", posts.size(), "page", page, "limit", limit, "offset", offset);
+      LoggingUtil.logServiceDebug(logger, "Posts retrieved for dynamic feed", "postsCount", paginatedPosts.size(), "page", page, "limit", limit, "offset", offset);
 
       GetFeedResponse response = GetFeedResponse.builder()
-          .posts(posts).totalPage(totalPage).build();
+          .posts(paginatedPosts).totalPage(totalPage).build();
       
-      LoggingUtil.logBusinessEvent(logger, "Dynamic feed retrieved successfully", "username", userPrincipal.getUsername(), "postsCount", posts.size(), "totalPage", totalPage, "followingCount", followingProfileIdList.size());
+      LoggingUtil.logBusinessEvent(logger, "Dynamic feed retrieved successfully", "username", userPrincipal.getUsername(), "postsCount", paginatedPosts.size(), "totalPage", totalPage, "followingCount", followingProfileIdList.size());
       
       return response;
     } catch (Exception e) {

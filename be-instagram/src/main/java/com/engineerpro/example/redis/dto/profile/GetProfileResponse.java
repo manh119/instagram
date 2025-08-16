@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class GetProfileResponse {
-  Profile profile;
-  int numberOfPost;
-  int numberOfFollower;
-  int numberOfFollowing;
+    private Profile profile;
+    private int followersCount;
+    private int followingCount;
+    private int postsCount;
 }

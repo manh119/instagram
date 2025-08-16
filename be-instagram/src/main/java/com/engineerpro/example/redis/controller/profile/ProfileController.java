@@ -22,6 +22,8 @@ import com.engineerpro.example.redis.util.LoggingUtil;
 
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
+import com.engineerpro.example.redis.repository.FollowerRepository;
+import com.engineerpro.example.redis.repository.PostRepository;
 
 @RestController
 @RequestMapping(path = "/profiles")
@@ -31,6 +33,12 @@ public class ProfileController {
   
   @Autowired
   ProfileService profileService;
+
+  @Autowired
+  private FollowerRepository followerRepository;
+
+  @Autowired
+  private PostRepository postRepository;
 
   @PostMapping("/profile-image")
   public ResponseEntity<UpdateProfileImageResponse> updateProfileImage(
@@ -75,8 +83,7 @@ public class ProfileController {
     LoggingUtil.logControllerEntry(logger, "getProfile", "profileId", id);
     
     try {
-      Profile profile = profileService.getUserProfile(id);
-      GetProfileResponse response = GetProfileResponse.builder().profile(profile).build();
+      GetProfileResponse response = profileService.getUserProfileWithCounts(id);
       
       LoggingUtil.logControllerExit(logger, "getProfile", response);
       return ResponseEntity.ok().body(response);
@@ -93,7 +100,18 @@ public class ProfileController {
     try {
       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
       Profile profile = profileService.getUserProfile(userPrincipal);
-      GetProfileResponse response = GetProfileResponse.builder().profile(profile).build();
+      
+      // Get counts for current user profile
+      int followersCount = followerRepository.countByFollowingUserId(profile.getId());
+      int followingCount = followerRepository.countByFollowerUserId(profile.getId());
+      int postsCount = postRepository.countByCreatedBy(profile);
+      
+      GetProfileResponse response = GetProfileResponse.builder()
+          .profile(profile)
+          .followersCount(followersCount)
+          .followingCount(followingCount)
+          .postsCount(postsCount)
+          .build();
       
       LoggingUtil.logControllerExit(logger, "getProfile", response);
       return ResponseEntity.ok().body(response);

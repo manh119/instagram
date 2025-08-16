@@ -17,4 +17,6 @@ public class SuggestedUserResponse {
     private String fullName; // Map from displayName
     private String bio;
     private int followersCount; // Number of followers
+    private int followingCount; // Number of users this profile follows
+    private int postsCount; // Number of posts by this profile
 }

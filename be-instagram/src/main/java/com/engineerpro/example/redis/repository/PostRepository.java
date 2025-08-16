@@ -24,4 +24,34 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
   int countByCreatedByIn(@Param("ids") List<Integer> createdByIdList);
 
   int countByCreatedBy(Profile createdBy);
+
+  // Custom query to fetch posts with Profile data
+  @Query("SELECT p FROM Post p JOIN FETCH p.createdBy WHERE p.id IN :ids ORDER BY p.createdAt DESC")
+  List<Post> findByIdInWithProfile(@Param("ids") List<Integer> ids);
+
+  // Custom query to fetch posts by user with Profile data
+  @Query("SELECT p FROM Post p JOIN FETCH p.createdBy WHERE p.createdBy.id = :profileId ORDER BY p.createdAt DESC")
+  List<Post> findByCreatedByIdWithProfile(@Param("profileId") int profileId);
+
+  // Custom query to fetch posts by user with all necessary relationships for profile page
+  @Query("SELECT DISTINCT p FROM Post p " +
+         "JOIN FETCH p.createdBy " +
+         "LEFT JOIN FETCH p.comments " +
+         "LEFT JOIN FETCH p.userLikes " +
+         "WHERE p.createdBy.id = :profileId " +
+         "ORDER BY p.createdAt DESC")
+  List<Post> findByCreatedByIdWithAllRelationships(@Param("profileId") int profileId);
+
+  // Custom query to fetch a single post with all relationships for comments modal
+  @Query("SELECT DISTINCT p FROM Post p " +
+         "JOIN FETCH p.createdBy " +
+         "LEFT JOIN FETCH p.comments c " +
+         "LEFT JOIN FETCH c.createdBy " +
+         "LEFT JOIN FETCH p.userLikes " +
+         "WHERE p.id = :postId")
+  Post findByIdWithAllRelationships(@Param("postId") int postId);
+
+  // Custom query to fetch posts with Profile data by profile IDs for feed
+  @Query("SELECT p FROM Post p JOIN FETCH p.createdBy WHERE p.createdBy.id IN :profileIds ORDER BY p.createdAt DESC")
+  List<Post> findByCreatedByProfileIdsWithProfile(@Param("profileIds") List<Integer> profileIds);
 }

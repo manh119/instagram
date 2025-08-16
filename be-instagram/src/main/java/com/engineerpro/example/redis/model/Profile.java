@@ -22,10 +22,24 @@ public class Profile {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id")
   private int id;
+  
   @Column(unique = true, name = "userId", nullable = false)
-  String userId;
-  String profileImageUrl;
-  String displayName;
-  String username;
-  String bio;
+  private String userId;
+  
+  private String profileImageUrl;
+  private String displayName;
+  private String username;
+  private String bio;
+
+  // Custom toString method to avoid circular references
+  @Override
+  public String toString() {
+    return "Profile{" +
+        "id=" + id +
+        ", userId='" + userId + '\'' +
+        ", username='" + username + '\'' +
+        ", displayName='" + displayName + '\'' +
+        ", bio='" + bio + '\'' +
+        '}';
+  }
 }

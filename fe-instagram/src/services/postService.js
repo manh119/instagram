@@ -16,6 +16,26 @@ class PostService {
         if (!token) {
             throw new Error('No authentication token found');
         }
+
+        // Check if token is expired
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const currentTime = Date.now() / 1000;
+            if (payload.exp < currentTime) {
+                console.error('PostService - Token expired:', new Date(payload.exp * 1000));
+                // Clear expired token
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('authUser');
+                throw new Error('Authentication token has expired. Please log in again.');
+            }
+        } catch (error) {
+            console.error('PostService - Error validating token:', error);
+            if (error.message.includes('expired')) {
+                throw error;
+            }
+            throw new Error('Invalid authentication token. Please log in again.');
+        }
+
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -121,19 +141,36 @@ class PostService {
     // Like a post
     async likePost(postId) {
         try {
+            console.log('PostService - Liking post:', postId);
+            console.log('PostService - Auth headers:', this.getAuthHeaders());
+
             const response = await fetch(`${this.baseURL}/posts/like/${postId}`, {
                 method: 'POST',
                 headers: this.getAuthHeaders()
             });
 
+            console.log('PostService - Like response status:', response.status);
+            console.log('PostService - Like response headers:', response.headers);
+
             if (!response.ok) {
+                if (response.status === 401) {
+                    console.error('PostService - Authentication failed. Token may be expired or invalid.');
+                    // Clear invalid authentication
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('authUser');
+                    throw new Error('Authentication failed. Please log in again.');
+                }
+
                 const errorData = await response.json().catch(() => ({}));
+                console.error('PostService - Like error response:', errorData);
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('PostService - Like successful:', result);
+            return result;
         } catch (error) {
-            console.error('Error liking post:', error);
+            console.error('PostService - Error liking post:', error);
             throw error;
         }
     }

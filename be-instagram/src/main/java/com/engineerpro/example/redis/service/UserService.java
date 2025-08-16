@@ -7,4 +7,5 @@ import com.engineerpro.example.redis.dto.UserPrincipal;
 
 public interface UserService {
     List<SuggestedUserResponse> getSuggestedUsers(UserPrincipal userPrincipal, int limit);
+    List<SuggestedUserResponse> searchUsers(UserPrincipal userPrincipal, String query, int limit);
 }

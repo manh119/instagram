@@ -12,4 +12,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
   Profile findOneByUserId(String userId);
   
   List<Profile> findByIdNotIn(List<Integer> ids);
+  
+  List<Profile> findByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(String username, String displayName);
 }

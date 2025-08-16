@@ -1,13 +1,12 @@
 import { Avatar, AvatarGroup, Button, Flex, Text, VStack, useDisclosure } from "@chakra-ui/react";
-import useUserProfileStore from "../../store/userProfileStore";
+import { useUserProfileStoreShallow } from "../../store/userProfileStore";
 import { useAuth } from "../../contexts/AuthContext";
 import EditProfile from "./EditProfile";
 import useFollowUser from "../../hooks/useFollowUser";
 
 const ProfileHeader = ({ profile }) => {
 	// Use the profile prop if provided, otherwise fall back to store
-	const { userProfile: storeProfile } = useUserProfileStore();
-	const userProfile = profile || storeProfile;
+	const userProfile = profile || useUserProfileStoreShallow((state) => state.userProfile);
 
 	const { user: authUser } = useAuth();
 	const { isOpen, onOpen, onClose } = useDisclosure();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import useUserProfileStore from "../store/userProfileStore";
 import useShowToast from "./useShowToast";
@@ -11,7 +11,12 @@ const useFollowUser = (profileId) => {
 	const showToast = useShowToast();
 	const { userProfile, setUserProfile } = useUserProfileStore();
 
-	const handleFollowUser = async () => {
+	const handleFollowUser = useCallback(async () => {
+		// Don't do anything if no valid profileId
+		if (!profileId || profileId === 0) {
+			return;
+		}
+
 		setIsUpdating(true);
 		try {
 			// Call the real API to follow/unfollow
@@ -67,12 +72,14 @@ const useFollowUser = (profileId) => {
 		} finally {
 			setIsUpdating(false);
 		}
-	};
+	}, [profileId, isFollowing, authUser, userProfile, setAuthUser, setUserProfile, showToast]);
 
 	useEffect(() => {
-		if (authUser) {
+		if (authUser && profileId && profileId !== 0) {
 			const isFollowing = authUser.following.includes(profileId);
 			setIsFollowing(isFollowing);
+		} else {
+			setIsFollowing(false);
 		}
 	}, [authUser, profileId]);
 

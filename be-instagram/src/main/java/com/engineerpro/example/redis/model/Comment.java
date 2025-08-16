@@ -34,10 +34,12 @@ public class Comment {
   @ManyToOne
   @JoinColumn(name = "profile_id", nullable = false)
   @JsonProperty("createdBy")
-  Profile createdBy;
+  private Profile createdBy;
 
   @NotNull
-  String comment;
+  @Column(name = "comment")
+  @JsonProperty("content") // Frontend expects 'content'
+  private String content;
 
   @NotNull
   private Date createdAt;
@@ -46,4 +48,15 @@ public class Comment {
   @JoinColumn(name = "post_id", nullable = false)
   @JsonIgnore
   private Post post;
+
+  // Custom toString method to avoid circular references
+  @Override
+  public String toString() {
+    return "Comment{" +
+        "id=" + id +
+        ", content='" + content + '\'' +
+        ", createdAt=" + createdAt +
+        ", createdBy=" + (createdBy != null ? "Profile(id=" + createdBy.getId() + ", username=" + createdBy.getUsername() + ")" : "null") +
+        '}';
+  }
 }
