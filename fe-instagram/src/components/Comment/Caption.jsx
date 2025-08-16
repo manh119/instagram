@@ -8,12 +8,12 @@ const Caption = ({ post }) => {
 
 	return (
 		<Flex gap={4}>
-			<Link to={`/${userProfile.username}`}>
+			<Link to={`/profiles/${userProfile.id}`}>
 				<Avatar src={userProfile.profilePicURL} size={"sm"} />
 			</Link>
 			<Flex direction={"column"}>
 				<Flex gap={2} alignItems={"center"}>
-					<Link to={`/${userProfile.username}`}>
+					<Link to={`/profiles/${userProfile.id}`}>
 						<Text fontWeight={"bold"} fontSize={12}>
 							{userProfile.username}
 						</Text>

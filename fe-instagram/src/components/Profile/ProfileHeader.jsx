@@ -4,13 +4,23 @@ import { useAuth } from "../../contexts/AuthContext";
 import EditProfile from "./EditProfile";
 import useFollowUser from "../../hooks/useFollowUser";
 
-const ProfileHeader = () => {
-	const { userProfile } = useUserProfileStore();
+const ProfileHeader = ({ profile }) => {
+	// Use the profile prop if provided, otherwise fall back to store
+	const { userProfile: storeProfile } = useUserProfileStore();
+	const userProfile = profile || storeProfile;
+
 	const { user: authUser } = useAuth();
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(userProfile?.uid);
-	const visitingOwnProfileAndAuth = authUser && authUser.username === userProfile.username;
-	const visitingAnotherProfileAndAuth = authUser && authUser.username !== userProfile.username;
+	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(userProfile?.id);
+
+	// Check if we're visiting our own profile or someone else's
+	const visitingOwnProfileAndAuth = authUser && authUser.username === userProfile?.username;
+	const visitingAnotherProfileAndAuth = authUser && authUser.username !== userProfile?.username;
+
+	// Don't render if no profile data
+	if (!userProfile) {
+		return null;
+	}
 
 	return (
 		<Flex gap={{ base: 4, sm: 10 }} py={10} direction={{ base: "column", sm: "row" }}>
@@ -59,19 +69,19 @@ const ProfileHeader = () => {
 				<Flex alignItems={"center"} gap={{ base: 2, sm: 4 }}>
 					<Text fontSize={{ base: "xs", md: "sm" }}>
 						<Text as='span' fontWeight={"bold"} mr={1}>
-							{userProfile.posts.length}
+							{userProfile.postsCount || userProfile.posts?.length || 0}
 						</Text>
 						Posts
 					</Text>
 					<Text fontSize={{ base: "xs", md: "sm" }}>
 						<Text as='span' fontWeight={"bold"} mr={1}>
-							{userProfile.followers.length}
+							{userProfile.followersCount || userProfile.followers?.length || 0}
 						</Text>
 						Followers
 					</Text>
 					<Text fontSize={{ base: "xs", md: "sm" }}>
 						<Text as='span' fontWeight={"bold"} mr={1}>
-							{userProfile.following.length}
+							{userProfile.followingCount || userProfile.following?.length || 0}
 						</Text>
 						Following
 					</Text>

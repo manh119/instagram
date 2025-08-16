@@ -1,67 +1,41 @@
-import { Avatar, Box, Button, Flex, VStack } from "@chakra-ui/react";
+import { Avatar, Button, Flex, Text, VStack } from "@chakra-ui/react";
 import useFollowUser from "../../hooks/useFollowUser";
-import { useAuth } from "../../contexts/AuthContext";
-import { Link } from "react-router-dom";
+import ProfileHoverTrigger from "../ProfilePreview/ProfileHoverTrigger";
 
-const SuggestedUser = ({ user, updateUser, removeUser }) => {
-	const { isFollowing, isUpdating, handleFollowUser } = useFollowUser(user.id); // Use profile.id instead of uid
-	const { user: authUser } = useAuth();
-
-	const onFollowUser = async () => {
-		try {
-			await handleFollowUser();
-
-			if (isFollowing) {
-				// Unfollowed - update follower count
-				updateUser(user.id, {
-					followersCount: user.followersCount - 1
-				});
-			} else {
-				// Followed - remove from suggestions and update follower count
-				updateUser(user.id, {
-					followersCount: user.followersCount + 1
-				});
-				// Optionally remove from suggestions after following
-				// removeUser(user.id);
-			}
-		} catch (error) {
-			console.error('Error in follow/unfollow:', error);
-		}
-	};
+const SuggestedUser = ({ user }) => {
+	const { handleFollowUser, isFollowing, isUpdating } = useFollowUser(user.id);
 
 	return (
-		<Flex justifyContent={"space-between"} alignItems={"center"} w={"full"}>
-			<Flex alignItems={"center"} gap={2}>
-				<Link to={`/${user.username}`}>
-					<Avatar src={user.profilePicURL} size={"md"} />
-				</Link>
-				<VStack spacing={2} alignItems={"flex-start"}>
-					<Link to={`/${user.username}`}>
-						<Box fontSize={12} fontWeight={"bold"}>
-							{user.fullName}
-						</Box>
-					</Link>
-					<Box fontSize={11} color={"gray.500"}>
-						{user.followersCount} followers
-					</Box>
+		<Flex gap={4} alignItems={"center"} justifyContent={"space-between"} w={"full"}>
+			<Flex gap={4} alignItems={"center"} flex={1}>
+				<ProfileHoverTrigger profile={user} linkTo={`/profiles/${user.id}`}>
+					<Avatar src={user.profilePicURL} size={"md"} cursor={"pointer"} />
+				</ProfileHoverTrigger>
+				<VStack alignItems={"start"} gap={1} flex={1}>
+					<ProfileHoverTrigger profile={user} linkTo={`/profiles/${user.id}`}>
+						<Text fontSize={12} fontWeight={"bold"} cursor={"pointer"}>
+							{user.username}
+						</Text>
+					</ProfileHoverTrigger>
+					<Text fontSize={11} color={"gray.light"}>
+						{user.fullName}
+					</Text>
 				</VStack>
 			</Flex>
-			{authUser.uid !== user.uid && (
-				<Button
-					fontSize={13}
-					bg={"transparent"}
-					p={0}
-					h={"max-content"}
-					fontWeight={"medium"}
-					color={"blue.400"}
-					cursor={"pointer"}
-					_hover={{ color: "white" }}
-					onClick={onFollowUser}
-					isLoading={isUpdating}
-				>
-					{isFollowing ? "Unfollow" : "Follow"}
-				</Button>
-			)}
+			<Button
+				size={"xs"}
+				bg={"transparent"}
+				color={"blue.500"}
+				fontWeight={"bold"}
+				_hover={{
+					color: "white",
+				}}
+				transition={"0.2s ease-in-out"}
+				onClick={handleFollowUser}
+				isLoading={isUpdating}
+			>
+				{isFollowing ? "Unfollow" : "Follow"}
+			</Button>
 		</Flex>
 	);
 };

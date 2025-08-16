@@ -3,11 +3,11 @@ import HomePage from "./pages/HomePage/HomePage";
 import AuthPage from "./pages/AuthPage/AuthPage";
 import PageLayout from "./Layouts/PageLayout/PageLayout";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
-import OAuth2Redirect from "./components/auth/OAuth2Redirect";
+import { OAuth2Redirect } from "./components/auth/OAuth2Redirect";
 import { useAuth } from "./contexts/AuthContext";
 
 function App() {
-	const { isAuthenticated, loading } = useAuth();
+	const { isAuthenticated, loading, user } = useAuth();
 
 	if (loading) {
 		return (
@@ -27,9 +27,10 @@ function App() {
 		<PageLayout>
 			<Routes>
 				<Route path='/' element={isAuthenticated ? <HomePage /> : <Navigate to='/auth' />} />
-				<Route path='/auth' element={!isAuthenticated ? <AuthPage /> : <Navigate to='/' />} />
+				<Route path='/auth' element={!isAuthenticated ? <Navigate to='/' /> : <AuthPage />} />
 				<Route path='/oauth2/redirect' element={<OAuth2Redirect />} />
-				<Route path='/:username' element={<ProfilePage />} />
+				<Route path='/profiles/me' element={<ProfilePage isCurrentUser={true} />} />
+				<Route path='/profiles/:id' element={<ProfilePage />} />
 			</Routes>
 		</PageLayout>
 	);

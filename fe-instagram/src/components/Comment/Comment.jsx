@@ -1,6 +1,6 @@
 import { Avatar, Flex, Skeleton, SkeletonCircle, Text } from "@chakra-ui/react";
 import useGetUserProfileById from "../../hooks/useGetUserProfileById";
-import { Link } from "react-router-dom";
+import ProfileHoverTrigger from "../ProfilePreview/ProfileHoverTrigger";
 import { timeAgo } from "../../utils/timeAgo";
 
 const Comment = ({ comment }) => {
@@ -9,16 +9,28 @@ const Comment = ({ comment }) => {
 	if (isLoading) return <CommentSkeleton />;
 	return (
 		<Flex gap={4}>
-			<Link to={`/${userProfile.username}`}>
-				<Avatar src={userProfile.profilePicURL} size={"sm"} />
-			</Link>
+			<ProfileHoverTrigger profile={userProfile} linkTo={`/profiles/${userProfile.id}`}>
+				<Avatar
+					src={userProfile.profilePicURL}
+					size={"sm"}
+					cursor="pointer"
+					_hover={{ opacity: 0.8 }}
+					transition="opacity 0.2s"
+				/>
+			</ProfileHoverTrigger>
 			<Flex direction={"column"}>
 				<Flex gap={2} alignItems={"center"}>
-					<Link to={`/${userProfile.username}`}>
-						<Text fontWeight={"bold"} fontSize={12}>
+					<ProfileHoverTrigger profile={userProfile} linkTo={`/profiles/${userProfile.id}`}>
+						<Text
+							fontWeight={"bold"}
+							fontSize={12}
+							cursor="pointer"
+							_hover={{ textDecoration: "underline" }}
+							transition="text-decoration 0.2s"
+						>
 							{userProfile.username}
 						</Text>
-					</Link>
+					</ProfileHoverTrigger>
 					<Text fontSize={14}>{comment.comment}</Text>
 				</Flex>
 				<Text fontSize={12} color={"gray"}>

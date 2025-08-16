@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
 import usePostStore from "../store/postStore";
 import useShowToast from "./useShowToast";
-import useUserProfileStore from "../store/userProfileStore";
 import postService from "../services/postService";
 
-const useGetUserPosts = () => {
+const useGetUserPosts = (profile) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const { posts, setPosts } = usePostStore();
 	const showToast = useShowToast();
-	const userProfile = useUserProfileStore((state) => state.userProfile);
 
 	useEffect(() => {
 		const getPosts = async () => {
-			if (!userProfile) return;
+			if (!profile) {
+				setIsLoading(false);
+				setPosts([]);
+				return;
+			}
+
 			setIsLoading(true);
 			setPosts([]);
 
 			try {
 				// Get user ID from profile (try both id and uid fields)
-				const userId = userProfile.id || userProfile.uid;
+				const userId = profile.id || profile.uid;
 				if (!userId) {
 					throw new Error("User ID not found");
 				}
@@ -39,7 +42,7 @@ const useGetUserPosts = () => {
 		};
 
 		getPosts();
-	}, [setPosts, userProfile, showToast]);
+	}, [setPosts, profile, showToast]);
 
 	return { isLoading, posts };
 };
