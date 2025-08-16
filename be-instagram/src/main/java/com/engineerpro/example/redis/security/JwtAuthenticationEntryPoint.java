@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+// response for unauthorized access
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

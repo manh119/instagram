@@ -46,7 +46,6 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**", "/oauth2/**", "/api-docs/**", "/swagger-ui/**", "/actuator/health",
                                 "/images/**")
                         .permitAll()
-                        .requestMatchers("/posts/**", "/profiles/**", "/feed/**").authenticated()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(auth -> auth
