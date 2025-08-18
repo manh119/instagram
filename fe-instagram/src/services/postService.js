@@ -56,26 +56,57 @@ class PostService {
         });
     }
 
+    // Convert video file to base64 string
+    async videoToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // Send the complete data URL that the backend expects
+                resolve(reader.result);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
     // Create a new post
     async createPost(postData) {
         try {
+            let base64Image = null;
+            let base64Video = null;
+
             // Convert image to base64 if it's a file
-            let base64Image = postData.image;
-            if (postData.image instanceof File) {
+            if (postData.image && postData.image instanceof File) {
                 base64Image = await this.imageToBase64(postData.image);
                 console.log('Image converted to base64, length:', base64Image.length);
-                console.log('Base64 starts with:', base64Image.substring(0, 50));
+            } else if (postData.image) {
+                base64Image = postData.image;
+            }
+
+            // Convert video to base64 if it's a file
+            if (postData.video && postData.video instanceof File) {
+                base64Video = await this.videoToBase64(postData.video);
+                console.log('Video converted to base64, length:', base64Video.length);
+            } else if (postData.video) {
+                base64Video = postData.video;
             }
 
             const requestBody = {
-                caption: postData.caption,
-                base64ImageString: base64Image
+                caption: postData.caption
             };
+
+            // Only add media fields if they exist
+            if (base64Image) {
+                requestBody.base64ImageString = base64Image;
+            }
+            if (base64Video) {
+                requestBody.base64VideoString = base64Video;
+            }
 
             console.log('Sending post request:', {
                 caption: requestBody.caption,
-                imageLength: requestBody.base64ImageString.length,
-                imageStart: requestBody.base64ImageString.substring(0, 50)
+                hasImage: !!base64Image,
+                hasVideo: !!base64Video
             });
 
             const response = await fetch(`${this.baseURL}/posts`, {

@@ -51,27 +51,93 @@ public class PostServiceImpl implements PostService {
     LoggingUtil.logBusinessEvent(logger, "Creating new post", "Username", userPrincipal.getUsername());
     
     try {
+      // Log request details
+      LoggingUtil.logServiceDebug(logger, "Post creation request details", 
+          "Username", userPrincipal.getUsername(),
+          "Has Image", request.hasImage(),
+          "Has Video", request.hasVideo(),
+          "Image Length", request.getImageLength(),
+          "Video Length", request.getVideoLength(),
+          "Video Format", request.getVideoFormat(),
+          "Caption Length", request.getCaption() != null ? request.getCaption().length() : 0);
+      
       Profile profile = profileService.getUserProfile(userPrincipal);
       LoggingUtil.logServiceDebug(logger, "Profile retrieved for post creation", "Profile ID", profile.getId());
-      
-      String url = uploadService.uploadImage(request.getBase64ImageString());
-      LoggingUtil.logServiceDebug(logger, "Image uploaded successfully", "Image URL", url);
       
       Post post = new Post();
       post.setCaption(request.getCaption());
       post.setCreatedAt(new Date());
       post.setCreatedBy(profile);
-      post.setImageUrl(url);
+      
+      // Handle image upload if provided
+      if (request.hasImage()) {
+        LoggingUtil.logServiceDebug(logger, "Processing image upload", 
+            "Username", userPrincipal.getUsername(), 
+            "Image length", request.getImageLength());
+        String imageUrl = uploadService.uploadImage(request.getBase64ImageString());
+        if (imageUrl != null) {
+          LoggingUtil.logServiceDebug(logger, "Image uploaded successfully", "Image URL", imageUrl);
+          post.setImageUrl(imageUrl);
+        } else {
+          LoggingUtil.logServiceWarning(logger, "Image upload failed", "Username", userPrincipal.getUsername());
+          throw new RuntimeException("Failed to upload image");
+        }
+      } else {
+        LoggingUtil.logServiceDebug(logger, "No image provided for post", "Username", userPrincipal.getUsername());
+      }
+      
+      // Handle video upload if provided
+      if (request.hasVideo()) {
+        LoggingUtil.logServiceDebug(logger, "Processing video upload", 
+            "Username", userPrincipal.getUsername(), 
+            "Video length", request.getVideoLength(),
+            "Video format", request.getVideoFormat());
+        
+        String videoUrl = uploadService.uploadVideo(request.getBase64VideoString());
+        if (videoUrl != null) {
+          LoggingUtil.logServiceDebug(logger, "Video uploaded successfully", 
+              "Video URL", videoUrl, 
+              "Format", request.getVideoFormat());
+          post.setVideoUrl(videoUrl);
+        } else {
+          LoggingUtil.logServiceWarning(logger, "Video upload failed", 
+              "Username", userPrincipal.getUsername(), 
+              "Format", request.getVideoFormat());
+          throw new RuntimeException("Failed to upload video");
+        }
+      } else {
+        LoggingUtil.logServiceDebug(logger, "No video provided for post", "Username", userPrincipal.getUsername());
+      }
+      
+      // Validate that at least one media file is provided
+      if (!request.hasMedia()) {
+        LoggingUtil.logServiceWarning(logger, "No media files provided for post", "Username", userPrincipal.getUsername());
+        throw new IllegalArgumentException("At least one media file (image or video) must be provided");
+      }
+      
+      // Log post details before saving
+      LoggingUtil.logServiceDebug(logger, "Post details before saving", 
+          "Username", userPrincipal.getUsername(),
+          "Has Image", post.getImageUrl() != null,
+          "Has Video", post.getVideoUrl() != null,
+          "Caption Length", post.getCaption() != null ? post.getCaption().length() : 0);
       
       Post savedPost = postRepository.save(post);
-      LoggingUtil.logBusinessEvent(logger, "Post created successfully", "Post ID", savedPost.getId(), "Username", userPrincipal.getUsername());
+      LoggingUtil.logBusinessEvent(logger, "Post created successfully", 
+          "Post ID", savedPost.getId(), 
+          "Username", userPrincipal.getUsername(),
+          "Media Type", post.getVideoUrl() != null ? "Video" : "Image",
+          "Video Format", post.getVideoUrl() != null ? request.getVideoFormat() : "N/A");
 
       rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
       LoggingUtil.logServiceDebug(logger, "Post creation event sent to queue", "Post ID", post.getId());
 
       return savedPost;
     } catch (Exception e) {
-      LoggingUtil.logServiceWarning(logger, "Failed to create post", "Username", userPrincipal.getUsername(), "Error", e.getMessage());
+      LoggingUtil.logServiceWarning(logger, "Failed to create post", 
+          "Username", userPrincipal.getUsername(), 
+          "Error", e.getMessage(),
+          "Error Type", e.getClass().getSimpleName());
       throw e;
     }
   }
@@ -168,6 +234,20 @@ public class PostServiceImpl implements PostService {
       return posts;
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to retrieve user posts", "User ID", userId, "Error", e.getMessage());
+      throw e;
+    }
+  }
+
+  @Override
+  public Post getPostWithAllRelationships(int postId) {
+    LoggingUtil.logServiceDebug(logger, "Retrieving post with all relationships", "Post ID", postId);
+    
+    try {
+      Post post = postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
+      LoggingUtil.logServiceDebug(logger, "Post with relationships retrieved successfully", "Post ID", postId);
+      return post;
+    } catch (PostNotFoundException e) {
+      LoggingUtil.logServiceWarning(logger, "Post not found", "Post ID", postId);
       throw e;
     }
   }

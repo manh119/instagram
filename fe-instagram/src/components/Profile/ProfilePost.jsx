@@ -1,29 +1,36 @@
+import React, { useState } from "react";
 import {
-	Avatar,
-	Button,
-	Divider,
-	Flex,
-	GridItem,
-	Image,
 	Modal,
+	ModalOverlay,
+	ModalContent,
+	ModalHeader,
+	ModalFooter,
 	ModalBody,
 	ModalCloseButton,
-	ModalContent,
-	ModalOverlay,
-	Text,
-	VStack,
 	useDisclosure,
+	GridItem,
+	Image,
+	Text,
+	Button,
 	Box,
+	IconButton,
+	Avatar,
+	Divider,
+	Flex,
+	Grid,
+	VStack,
+	HStack
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 import { AiFillHeart } from "react-icons/ai";
 import { FaComment } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import ResponsiveVideoContainer from "../Common/ResponsiveVideoContainer";
 import Comment from "../Comment/Comment";
 import PostFooter from "../FeedPosts/PostFooter";
 import useUserProfileStore from "../../store/userProfileStore";
 import { useAuth } from "../../contexts/AuthContext";
 import useShowToast from "../../hooks/useShowToast";
-import { useState } from "react";
 import usePostStore from "../../store/postStore";
 import Caption from "../Comment/Caption";
 import postService from "../../services/postService";
@@ -108,10 +115,83 @@ const ProfilePost = ({ post }) => {
 	};
 
 	// Don't render if post is missing required data
-	if (!post || !post.imageUrl) {
+	if (!post || (!post.imageUrl && !post.videoUrl)) {
 		console.warn('ProfilePost - Missing required post data:', post);
 		return null;
 	}
+
+	const renderMedia = (isGrid = false) => {
+		if (post.videoUrl) {
+			if (isGrid) {
+				// For grid view, show a video thumbnail with play icon and auto-play
+				return (
+					<ResponsiveVideoContainer variant="grid">
+						<video
+							src={post.videoUrl}
+							muted
+							loop
+							preload="metadata"
+							style={{
+								width: "100%",
+								height: "100%",
+								objectFit: "cover"
+							}}
+							onMouseEnter={(e) => {
+								// Auto-play on hover for grid view
+								e.target.play().catch(() => {
+									// Auto-play might fail due to browser policies
+									console.log('Grid video hover play failed');
+								});
+							}}
+							onMouseLeave={(e) => {
+								// Pause when not hovering
+								e.target.pause();
+							}}
+						/>
+						<Box
+							className="play-button-overlay"
+							position="absolute"
+							top="50%"
+							left="50%"
+							transform="translate(-50%, -50%)"
+						>
+							<Box className="play-icon" />
+						</Box>
+					</ResponsiveVideoContainer>
+				);
+			} else {
+				// For modal view, show video with controls and auto-play
+				return (
+					<ResponsiveVideoContainer variant="modal">
+						<video
+							src={post.videoUrl}
+							controls
+							muted
+							loop
+							autoPlay
+							preload="metadata"
+							style={{
+								maxHeight: "100%",
+								maxWidth: "100%",
+								objectFit: "contain"
+							}}
+						/>
+					</ResponsiveVideoContainer>
+				);
+			}
+		} else if (post.imageUrl) {
+			return (
+				<Image
+					src={post.imageUrl}
+					alt='profile post'
+					w={"100%"}
+					h={"100%"}
+					objectFit={isGrid ? "cover" : "contain"}
+				/>
+			);
+		}
+		return null;
+	};
 
 	return (
 		<>
@@ -183,7 +263,7 @@ const ProfilePost = ({ post }) => {
 					</Flex>
 				</Flex>
 
-				<Image src={post.imageUrl} alt='profile post' w={"100%"} h={"100%"} objectFit={"cover"} />
+				{renderMedia(true)}
 			</GridItem>
 
 			<Modal isOpen={isOpen} onClose={onClose} isCentered={true} size={{ base: "3xl", md: "5xl" }}>
@@ -207,7 +287,7 @@ const ProfilePost = ({ post }) => {
 								justifyContent={"center"}
 								alignItems={"center"}
 							>
-								<Image src={post.imageUrl} alt='profile post' />
+								{renderMedia(false)}
 							</Flex>
 							<Flex flex={1} flexDir={"column"} px={10} display={{ base: "none", md: "flex" }}>
 								<Flex alignItems={"center"} justifyContent={"space-between"}>

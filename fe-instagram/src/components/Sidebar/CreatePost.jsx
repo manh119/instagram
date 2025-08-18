@@ -15,9 +15,12 @@ import {
 	Textarea,
 	Tooltip,
 	useDisclosure,
+	Text,
+	IconButton,
+	HStack,
 } from "@chakra-ui/react";
 import { CreatePostLogo } from "../../assets/constants";
-import { BsFillImageFill } from "react-icons/bs";
+import { BsFillImageFill, BsFillCameraVideoFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import usePreviewImg from "../../hooks/usePreviewImg";
 import useShowToast from "../../hooks/useShowToast";
@@ -31,20 +34,52 @@ const CreatePost = () => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [caption, setCaption] = useState("");
 	const imageRef = useRef(null);
+	const videoRef = useRef(null);
 	const { handleImageChange, selectedFile, setSelectedFile } = usePreviewImg();
+	const [selectedVideo, setSelectedVideo] = useState(null);
+	const [videoPreview, setVideoPreview] = useState(null);
 	const showToast = useShowToast();
 	const { user: authUser } = useAuth();
 	const { isLoading, handleCreatePost } = useCreatePost();
 
+	const handleVideoChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			// Check file size (100MB limit)
+			if (file.size > 100 * 1024 * 1024) {
+				showToast("Error", "Video file size must be less than 100MB", "error");
+				return;
+			}
+
+			// Check file type
+			if (!file.type.startsWith('video/')) {
+				showToast("Error", "Please select a valid video file", "error");
+				return;
+			}
+
+			setSelectedVideo(file);
+			const url = URL.createObjectURL(file);
+			setVideoPreview(url);
+		}
+	};
+
 	const handlePostCreation = async () => {
 		try {
-			await handleCreatePost(selectedFile, caption);
+			await handleCreatePost(selectedFile, selectedVideo, caption);
 			onClose();
 			setCaption("");
 			setSelectedFile(null);
+			setSelectedVideo(null);
+			setVideoPreview(null);
 		} catch (error) {
 			showToast("Error", error.message, "error");
 		}
+	};
+
+	const clearMedia = () => {
+		setSelectedFile(null);
+		setSelectedVideo(null);
+		setVideoPreview(null);
 	};
 
 	return (
@@ -83,32 +118,90 @@ const CreatePost = () => {
 							placeholder='Post caption...'
 							value={caption}
 							onChange={(e) => setCaption(e.target.value)}
+							mb={4}
 						/>
 
-						<Input type='file' hidden ref={imageRef} onChange={handleImageChange} />
+						<Text mb={3} fontSize="sm" color="gray.400">
+							Add media to your post:
+						</Text>
 
-						<BsFillImageFill
-							onClick={() => imageRef.current.click()}
-							style={{ marginTop: "15px", marginLeft: "5px", cursor: "pointer" }}
-							size={16}
-						/>
+						<HStack spacing={4} mb={4}>
+							<Input type='file' hidden ref={imageRef} onChange={handleImageChange} accept="image/*" />
+							<Input type='file' hidden ref={videoRef} onChange={handleVideoChange} accept="video/*" />
+
+							<IconButton
+								icon={<BsFillImageFill />}
+								onClick={() => imageRef.current.click()}
+								aria-label="Add image"
+								colorScheme="blue"
+								variant="outline"
+								size="lg"
+							/>
+
+							<IconButton
+								icon={<BsFillCameraVideoFill />}
+								onClick={() => videoRef.current.click()}
+								aria-label="Add video"
+								colorScheme="red"
+								variant="outline"
+								size="lg"
+							/>
+						</HStack>
+
+						{/* Image Preview */}
 						{selectedFile && (
 							<Flex mt={5} w={"full"} position={"relative"} justifyContent={"center"}>
-								<Image src={selectedFile} alt='Selected img' />
+								<Image src={selectedFile} alt='Selected image' maxH="300px" objectFit="contain" />
+								<CloseButton
+									position={"absolute"}
+									top={2}
+									right={2}
+									onClick={() => setSelectedFile(null)}
+								/>
+							</Flex>
+						)}
+
+						{/* Video Preview */}
+						{selectedVideo && (
+							<Flex mt={5} w={"full"} position={"relative"} justifyContent={"center"}>
+								<video
+									src={videoPreview}
+									controls
+									style={{ maxHeight: "300px", maxWidth: "100%" }}
+								/>
 								<CloseButton
 									position={"absolute"}
 									top={2}
 									right={2}
 									onClick={() => {
-										setSelectedFile(null);
+										setSelectedVideo(null);
+										setVideoPreview(null);
 									}}
 								/>
 							</Flex>
 						)}
+
+						{/* Clear All Button */}
+						{(selectedFile || selectedVideo) && (
+							<Button
+								onClick={clearMedia}
+								colorScheme="gray"
+								variant="outline"
+								size="sm"
+								mt={3}
+							>
+								Clear All Media
+							</Button>
+						)}
 					</ModalBody>
 
 					<ModalFooter>
-						<Button mr={3} onClick={handlePostCreation} isLoading={isLoading}>
+						<Button
+							mr={3}
+							onClick={handlePostCreation}
+							isLoading={isLoading}
+							isDisabled={!selectedFile && !selectedVideo}
+						>
 							Post
 						</Button>
 					</ModalFooter>
@@ -129,9 +222,9 @@ function useCreatePost() {
 	const { pathname } = useLocation();
 	const { user: authUser } = useAuth();
 
-	const handleCreatePost = async (selectedFile, caption) => {
+	const handleCreatePost = async (selectedFile, selectedVideo, caption) => {
 		if (isLoading) return;
-		if (!selectedFile) throw new Error("Please select an image");
+		if (!selectedFile && !selectedVideo) throw new Error("Please select an image or video");
 		if (!authUser) throw new Error("You must be logged in to create a post");
 
 		setIsLoading(true);
@@ -139,9 +232,15 @@ function useCreatePost() {
 		try {
 			// Create post using the real API
 			const postData = {
-				image: selectedFile,
 				caption: caption
 			};
+
+			if (selectedFile) {
+				postData.image = selectedFile;
+			}
+			if (selectedVideo) {
+				postData.video = selectedVideo;
+			}
 
 			const response = await postService.createPost(postData);
 
@@ -167,64 +266,4 @@ function useCreatePost() {
 	};
 
 	return { isLoading, handleCreatePost };
-}
-
-// 1- COPY AND PASTE AS THE STARTER CODE FOR THE CRAETEPOST COMPONENT
-// import { Box, Flex, Tooltip } from "@chakra-ui/react";
-// import { CreatePostLogo } from "../../assets/constants";
-
-// const CreatePost = () => {
-// 	return (
-// 		<>
-// 			<Tooltip
-// 				hasArrow
-// 				label={"Create"}
-// 				placement='right'
-// 				ml={1}
-// 				openDelay={500}
-// 				display={{ base: "block", md: "none" }}
-// 			>
-// 				<Flex
-// 					alignItems={"center"}
-// 					gap={4}
-// 					_hover={{ bg: "whiteAlpha.400" }}
-// 					borderRadius={6}
-// 					p={2}
-// 					w={{ base: 10, md: "full" }}
-// 					justifyContent={{ base: "center", md: "flex-start" }}
-// 				>
-// 					<CreatePostLogo />
-// 					<Box display={{ base: "none", md: "block" }}>Create</Box>
-// 				</Flex>
-// 			</Tooltip>
-// 		</>
-// 	);
-// };
-
-// export default CreatePost;
-
-// 2-COPY AND PASTE FOR THE MODAL
-{
-	/* <Modal isOpen={isOpen} onClose={onClose} size='xl'>
-				<ModalOverlay />
-
-				<ModalContent bg={"black"} border={"1px solid gray"}>
-					<ModalHeader>Create Post</ModalHeader>
-					<ModalCloseButton />
-					<ModalBody pb={6}>
-						<Textarea placeholder='Post caption...' />
-
-						<Input type='file' hidden />
-
-						<BsFillImageFill
-							style={{ marginTop: "15px", marginLeft: "5px", cursor: "pointer" }}
-							size={16}
-						/>
-					</ModalBody>
-
-					<ModalFooter>
-						<Button mr={3}>Post</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal> */
 }

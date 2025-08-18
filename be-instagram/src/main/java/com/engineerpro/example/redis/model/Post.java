@@ -42,16 +42,13 @@ public class Post {
   private Profile createdBy;
 
   private String imageUrl;
+  private String videoUrl;
   private String caption;
   private Date createdAt;
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
   @JsonProperty("comments")
   private List<Comment> comments;
-
-  @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-  @JsonIgnore
-  private List<Notification> notifications;
 
   @ManyToMany
   @JsonProperty("userLikes")
@@ -64,6 +61,7 @@ public class Post {
         "id=" + id +
         ", createdBy=" + (createdBy != null ? "Profile(id=" + createdBy.getId() + ", username=" + createdBy.getUsername() + ")" : "null") +
         ", imageUrl='" + imageUrl + '\'' +
+        ", videoUrl='" + videoUrl + '\'' +
         ", caption='" + caption + '\'' +
         ", createdAt=" + createdAt +
         ", commentsCount=" + (comments != null ? comments.size() : 0) +
