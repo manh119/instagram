@@ -8,9 +8,12 @@ import org.springframework.stereotype.Service;
 import com.engineerpro.example.redis.dto.UserPrincipal;
 import com.engineerpro.example.redis.dto.profile.UpdateProfileImageRequest;
 import com.engineerpro.example.redis.dto.profile.UpdateProfileRequest;
+import com.engineerpro.example.redis.dto.profile.GetProfileResponse;
 import com.engineerpro.example.redis.exception.UserNotFoundException;
 import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.repository.ProfileRepository;
+import com.engineerpro.example.redis.repository.FollowerRepository;
+import com.engineerpro.example.redis.repository.PostRepository;
 import com.engineerpro.example.redis.service.UploadService;
 
 @Service
@@ -19,6 +22,10 @@ public class ProfileServiceImpl implements ProfileService {
   private UploadService uploadService;
   @Autowired
   private ProfileRepository profileRepository;
+  @Autowired
+  private FollowerRepository followerRepository;
+  @Autowired
+  private PostRepository postRepository;
 
   @Override
   public Profile getUserProfile(UserPrincipal userPrincipal) {
@@ -35,6 +42,27 @@ public class ProfileServiceImpl implements ProfileService {
   @Override
   public Profile getUserProfile(int id) {
     return profileRepository.findById(id).orElseThrow(UserNotFoundException::new);
+  }
+
+  @Override
+  public GetProfileResponse getUserProfileWithCounts(int id) {
+    Profile profile = getUserProfile(id);
+    
+    // Get follower count for this profile
+    int followersCount = followerRepository.countByFollowingUserId(profile.getId());
+    
+    // Get following count for this profile
+    int followingCount = followerRepository.countByFollowerUserId(profile.getId());
+    
+    // Get posts count for this profile
+    int postsCount = postRepository.countByCreatedBy(profile);
+    
+    return GetProfileResponse.builder()
+        .profile(profile)
+        .followersCount(followersCount)
+        .followingCount(followingCount)
+        .postsCount(postsCount)
+        .build();
   }
 
   @Override
