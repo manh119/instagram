@@ -48,13 +48,15 @@ public class Post {
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
   @JsonProperty("comments")
+  @JsonIgnore
   private List<Comment> comments;
 
   @ManyToMany
   @JsonProperty("userLikes")
+  @JsonIgnore
   private Set<Profile> userLikes;
 
-  // Custom toString method to avoid circular references
+  // Custom toString method to avoid circular references and lazy initialization issues
   @Override
   public String toString() {
     return "Post{" +
@@ -64,8 +66,6 @@ public class Post {
         ", videoUrl='" + videoUrl + '\'' +
         ", caption='" + caption + '\'' +
         ", createdAt=" + createdAt +
-        ", commentsCount=" + (comments != null ? comments.size() : 0) +
-        ", userLikesCount=" + (userLikes != null ? userLikes.size() : 0) +
         '}';
   }
 }

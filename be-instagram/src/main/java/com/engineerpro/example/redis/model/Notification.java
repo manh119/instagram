@@ -28,27 +28,28 @@ public class Notification {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
+    @JoinColumn(name = "to_user", nullable = false)
     private Profile recipient;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
+    @JoinColumn(name = "from_user")
     private Profile sender;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "notification_type", nullable = false)
     private NotificationType type;
     
-    @Column(name = "message", length = 500)
+    @Column(name = "text", length = 500)
     private String message;
     
-    @Column(name = "related_post_id")
+    @Column(name = "post_id")
     private Integer relatedPostId;
     
-    @Column(name = "related_comment_id")
+    @Column(name = "comment_id")
     private Integer relatedCommentId;
     
     @Column(name = "is_read", nullable = false)

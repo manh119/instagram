@@ -17,6 +17,7 @@ import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.repository.PostRepository;
 import com.engineerpro.example.redis.service.UploadService;
 import com.engineerpro.example.redis.service.profile.ProfileService;
+import com.engineerpro.example.redis.service.NotificationService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.engineerpro.example.redis.repository.FeedRepository;
@@ -39,6 +40,9 @@ public class PostServiceImpl implements PostService {
 
   @Autowired
   private FeedRepository feedRepository;
+
+  @Autowired
+  private NotificationService notificationService;
 
   @Autowired
   RabbitTemplate rabbitTemplate;
@@ -131,6 +135,9 @@ public class PostServiceImpl implements PostService {
 
       rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
       LoggingUtil.logServiceDebug(logger, "Post creation event sent to queue", "Post ID", post.getId());
+      
+      // Create new post notifications for followers
+      notificationService.createNewPostNotification(savedPost);
 
       return savedPost;
     } catch (Exception e) {
@@ -193,6 +200,10 @@ public class PostServiceImpl implements PostService {
       post.getUserLikes().add(profile);
       
       Post savedPost = postRepository.save(post);
+      
+      // Create like notification
+      notificationService.createLikeNotification(profile, post);
+      
       LoggingUtil.logBusinessEvent(logger, "Post liked successfully", "Post ID", postId, "Username", userPrincipal.getUsername());
       
       return savedPost;

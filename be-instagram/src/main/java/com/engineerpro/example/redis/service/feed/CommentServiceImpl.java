@@ -16,6 +16,7 @@ import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.repository.CommentRepository;
 import com.engineerpro.example.redis.repository.PostRepository;
 import com.engineerpro.example.redis.service.profile.ProfileService;
+import com.engineerpro.example.redis.service.NotificationService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public class CommentServiceImpl implements CommentService {
   @Autowired
   private CommentRepository commentRepository;
 
+  @Autowired
+  private NotificationService notificationService;
+
   @Override
   public Post createComment(UserPrincipal userPrincipal, CreateCommentRequest request) {
     LoggingUtil.logBusinessEvent(logger, "Creating comment", 
@@ -51,6 +55,9 @@ public class CommentServiceImpl implements CommentService {
       comment.setPost(post);
       
       commentRepository.save(comment);
+      
+      // Create comment notification
+      notificationService.createCommentNotification(profile, comment, post);
       
       LoggingUtil.logBusinessEvent(logger, "Comment created successfully", 
         "Comment ID", comment.getId(),

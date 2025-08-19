@@ -14,6 +14,7 @@ import com.engineerpro.example.redis.exception.InvalidInputException;
 import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.model.UserFollowing;
 import com.engineerpro.example.redis.repository.FollowerRepository;
+import com.engineerpro.example.redis.service.NotificationService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
 import org.slf4j.Logger;
@@ -27,6 +28,8 @@ public class FollowerServiceImpl implements FollowerService {
   private ProfileService profileService;
   @Autowired
   private FollowerRepository followerRepository;
+  @Autowired
+  private NotificationService notificationService;
 
   @Override
   public void folowUser(UserPrincipal userPrincipal, int profileId) {
@@ -53,6 +56,11 @@ public class FollowerServiceImpl implements FollowerService {
       userFollowing.setCreatedAt(new Date());
       
       followerRepository.save(userFollowing);
+      
+      // Create follow notification
+      Profile targetProfile = profileService.getUserProfile(profileId);
+      notificationService.createFollowNotification(profile, targetProfile);
+      
       LoggingUtil.logBusinessEvent(logger, "User followed successfully", "username", userPrincipal.getUsername(), "targetProfileId", profileId);
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to follow user", "username", userPrincipal.getUsername(), "targetProfileId", profileId, "Error", e.getMessage());
@@ -75,6 +83,11 @@ public class FollowerServiceImpl implements FollowerService {
       }
       
       followerRepository.delete(existedUserFollowing);
+      
+      // Create unfollow notification
+      Profile targetProfile = profileService.getUserProfile(profileId);
+      notificationService.createUnfollowNotification(profile, targetProfile);
+      
       LoggingUtil.logBusinessEvent(logger, "User unfollowed successfully", "username", userPrincipal.getUsername(), "targetProfileId", profileId);
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to unfollow user", "username", userPrincipal.getUsername(), "targetProfileId", profileId, "Error", e.getMessage());
