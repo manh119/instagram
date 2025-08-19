@@ -134,7 +134,8 @@ const ProfilePost = ({ post }) => {
 							style={{
 								width: "100%",
 								height: "100%",
-								objectFit: "cover"
+								objectFit: "cover",
+								aspectRatio: "9/16"
 							}}
 							onMouseEnter={(e) => {
 								// Auto-play on hover for grid view
@@ -173,7 +174,8 @@ const ProfilePost = ({ post }) => {
 							style={{
 								maxHeight: "100%",
 								maxWidth: "100%",
-								objectFit: "contain"
+								objectFit: "cover",
+								aspectRatio: "9/16"
 							}}
 						/>
 					</ResponsiveVideoContainer>

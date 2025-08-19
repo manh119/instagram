@@ -83,7 +83,7 @@ const FeedPost = ({ post }) => {
 							style={{
 								width: '100%',
 								height: '100%',
-								objectFit: videoConfig.performance.objectFit,
+								objectFit: 'cover',
 								display: videoError ? 'none' : 'block'
 							}}
 						/>

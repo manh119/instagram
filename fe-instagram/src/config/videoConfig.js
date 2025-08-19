@@ -21,13 +21,13 @@ const videoConfig = {
     performance: {
         maxHeight: '600px', // Maximum height for feed videos
         maxWidth: '100%', // Full width of container
-        objectFit: 'contain', // Maintain aspect ratio without cropping
-        aspectRatio: '16/9', // Preferred aspect ratio
-        minHeight: '300px', // Minimum height for better visibility
+        objectFit: 'cover', // Cover container for mobile-optimized look
+        aspectRatio: '9/16', // Mobile portrait aspect ratio (Instagram-style)
+        minHeight: '400px', // Minimum height for mobile videos
         responsiveBreakpoints: {
-            mobile: { maxHeight: '400px', minHeight: '250px' },
-            tablet: { maxHeight: '500px', minHeight: '300px' },
-            desktop: { maxHeight: '600px', minHeight: '350px' }
+            mobile: { maxHeight: '500px', minHeight: '400px', aspectRatio: '9/16' },
+            tablet: { maxHeight: '550px', minHeight: '450px', aspectRatio: '9/16' },
+            desktop: { maxHeight: '600px', minHeight: '500px', aspectRatio: '9/16' }
         }
     },
 

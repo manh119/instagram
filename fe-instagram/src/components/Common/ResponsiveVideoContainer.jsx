@@ -32,20 +32,26 @@ const ResponsiveVideoContainer = ({ children, variant = 'feed' }) => {
                 return {
                     maxHeight: responsiveSizing?.maxHeight || videoConfig.performance.maxHeight,
                     minHeight: responsiveSizing?.minHeight || videoConfig.performance.minHeight,
+                    aspectRatio: responsiveSizing?.aspectRatio || videoConfig.performance.aspectRatio,
+                    width: '100%',
                 };
             case 'grid':
                 return {
                     width: '100%',
                     height: '100%',
+                    aspectRatio: '9/16',
                 };
             case 'modal':
                 return {
                     width: '100%',
                     height: '100%',
+                    aspectRatio: '9/16',
                 };
             default:
                 return {
                     maxHeight: videoConfig.performance.maxHeight,
+                    aspectRatio: videoConfig.performance.aspectRatio,
+                    width: '100%',
                 };
         }
     };
