@@ -199,14 +199,17 @@ public class PostServiceImpl implements PostService {
       Post post = getPost(postId);
       post.getUserLikes().add(profile);
       
-      Post savedPost = postRepository.save(post);
+      postRepository.save(post);
       
       // Create like notification
       notificationService.createLikeNotification(profile, post);
       
+      // Fetch the updated post with all relationships to return complete data
+      Post updatedPost = postRepository.findByIdWithAllRelationships(postId);
+      
       LoggingUtil.logBusinessEvent(logger, "Post liked successfully", "Post ID", postId, "Username", userPrincipal.getUsername());
       
-      return savedPost;
+      return updatedPost;
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to like post", "Username", userPrincipal.getUsername(), "Post ID", postId, "Error", e.getMessage());
       throw e;
@@ -222,10 +225,14 @@ public class PostServiceImpl implements PostService {
       Post post = getPost(postId);
       post.getUserLikes().remove(profile);
       
-      Post savedPost = postRepository.save(post);
+      postRepository.save(post);
+      
+      // Fetch the updated post with all relationships to return complete data
+      Post updatedPost = postRepository.findByIdWithAllRelationships(postId);
+      
       LoggingUtil.logBusinessEvent(logger, "Post unliked successfully", "Post ID", postId, "Username", userPrincipal.getUsername());
       
-      return savedPost;
+      return updatedPost;
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to unlike post", "Username", userPrincipal.getUsername(), "Post ID", postId, "Error", e.getMessage());
       throw e;

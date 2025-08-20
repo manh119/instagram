@@ -14,7 +14,6 @@ import com.engineerpro.example.redis.repository.UserRepository;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
 import java.util.Optional;
-import java.util.UUID;
 import org.slf4j.Logger;
 
 @Service
@@ -67,13 +66,17 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     private User registerNewUser(OAuth2UserRequest oAuth2UserRequest, Oauth2UserInfoDto userInfoDto) {
         LoggingUtil.logBusinessEvent(logger, "Registering new OAuth2 user", "email", userInfoDto.getEmail(), "provider", oAuth2UserRequest.getClientRegistration().getRegistrationId());
         
-        User user = new User();
-        user.setProvider(oAuth2UserRequest.getClientRegistration().getRegistrationId());
-        user.setProviderId(userInfoDto.getId());
-        user.setName(userInfoDto.getName());
-        user.setUsername(userInfoDto.getEmail());
-        user.setPicture(userInfoDto.getPicture());
-        user.setId(UUID.randomUUID());
+        User user = User.builder()
+            .provider(oAuth2UserRequest.getClientRegistration().getRegistrationId())
+            .providerId(userInfoDto.getId())
+            .name(userInfoDto.getName())
+            .username(userInfoDto.getEmail())
+            .picture(userInfoDto.getPicture())
+            .enabled(true)
+            .accountNonExpired(true)
+            .accountNonLocked(true)
+            .credentialsNonExpired(true)
+            .build();
         
         User savedUser = userRepository.save(user);
         LoggingUtil.logBusinessEvent(logger, "New OAuth2 user registered successfully", "userId", savedUser.getId(), "username", savedUser.getUsername());

@@ -30,7 +30,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import postService from "../../services/postService";
 import { NotificationsLogo, UnlikeLogo } from "../../assets/constants";
 
-const CommentsModal = ({ isOpen, onClose, post }) => {
+const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	const { handlePostComment, isCommenting } = usePostComment();
 	const { handleDeleteComment, isDeleting } = useDeleteComment();
 	const { handleLikePost, isLiked, isUpdating } = useLikePost(post);
@@ -151,11 +151,11 @@ const CommentsModal = ({ isOpen, onClose, post }) => {
 										<Flex alignItems="center" gap={2} mb={2}>
 											<Avatar
 												size="xs"
-												name={post.createdBy?.username}
-												src={post.createdBy?.profileImageUrl}
+												name={creatorProfile?.username || post.createdBy?.username}
+												src={creatorProfile?.profileImageUrl || post.createdBy?.profileImageUrl}
 											/>
 											<Text fontWeight="bold" fontSize="sm">
-												{post.createdBy?.username}
+												{creatorProfile?.username || post.createdBy?.username}
 											</Text>
 										</Flex>
 										<Text fontSize="sm" lineHeight="1.4">

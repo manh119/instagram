@@ -28,7 +28,7 @@ public class Notification {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "notification_id")
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,7 +56,7 @@ public class Notification {
     @Builder.Default
     private Boolean isRead = false;
     
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created", nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
     

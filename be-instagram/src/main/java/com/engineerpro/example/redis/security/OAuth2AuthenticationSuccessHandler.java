@@ -195,7 +195,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             LoggingUtil.logBusinessEvent(logger, "User Updated Successfully", "User ID", savedUser.getId());
 
             // Also update the profile username if it's an email
-            Profile existingProfile = profileRepository.findOneByUserId(user.getId().toString());
+            Profile existingProfile = profileRepository.findOneByUser(user);
             if (existingProfile != null) {
                 Profile profile = existingProfile;
                 if (profile.getUsername().contains("@")) {
@@ -217,17 +217,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     "Provider", provider,
                     "Clean Username", cleanUsername);
 
-            User newUser = new User();
-            newUser.setId(UUID.randomUUID());
-            newUser.setUsername(uniqueUsername); // Use clean username instead of email
-            newUser.setName(oauth2User.getDisplayName());
-            newUser.setPicture(oauth2User.getPicture());
-            newUser.setProvider(provider);
-            newUser.setProviderId(providerId);
-            newUser.setEnabled(true);
-            newUser.setAccountNonExpired(true);
-            newUser.setAccountNonLocked(true);
-            newUser.setCredentialsNonExpired(true);
+            User newUser = User.builder()
+                .username(uniqueUsername) // Use clean username instead of email
+                .name(oauth2User.getDisplayName())
+                .picture(oauth2User.getPicture())
+                .provider(provider)
+                .providerId(providerId)
+                .enabled(true)
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .build();
 
             LoggingUtil.logServiceDebug(logger, "New User Details",
                     "ID", newUser.getId(),
@@ -241,7 +241,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             // Create profile for new user
             Profile profile = Profile.builder()
-                    .userId(savedUser.getId().toString())
+                    .user(savedUser)
                     .username(uniqueUsername) // Use clean username instead of email
                     .displayName(oauth2User.getDisplayName())
                     .profileImageUrl(oauth2User.getPicture())

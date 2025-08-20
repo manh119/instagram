@@ -19,7 +19,7 @@ import useLikePost from "../../hooks/useLikePost";
 import usePostComment from "../../hooks/usePostComment";
 import CommentsModal from "../Modals/CommentsModal";
 
-const PostFooter = ({ post }) => {
+const PostFooter = ({ post, creatorProfile }) => {
 	const [comment, setComment] = useState("");
 	const commentRef = useRef();
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -123,7 +123,7 @@ const PostFooter = ({ post }) => {
 				<SlideFade in={true} offsetY="20px">
 					<Text fontSize="sm" mb={3} lineHeight="1.4">
 						<Text as="span" fontWeight="semibold" mr={2}>
-							{post.createdBy?.username}
+							{creatorProfile?.username || post.createdBy?.username}
 						</Text>
 						{post.caption}
 					</Text>
@@ -194,6 +194,7 @@ const PostFooter = ({ post }) => {
 				isOpen={isOpen}
 				onClose={onClose}
 				post={post}
+				creatorProfile={creatorProfile}
 			/>
 		</Box>
 	);

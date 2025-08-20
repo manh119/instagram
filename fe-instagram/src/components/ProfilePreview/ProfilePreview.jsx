@@ -109,19 +109,6 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
 
                 {/* Actions */}
                 <VStack spacing={3}>
-                    <Link to={`/profiles/${profile.id}`} style={{ width: '100%' }}>
-                        <Button
-                            size="md"
-                            variant="outline"
-                            colorScheme="blue"
-                            w="full"
-                            _hover={{ bg: 'blue.50', transform: 'scale(1.02)' }}
-                            _active={{ transform: 'scale(0.98)' }}
-                            transition="all 0.2s"
-                        >
-                            View Profile
-                        </Button>
-                    </Link>
 
                     <Button
                         size="md"

@@ -9,15 +9,14 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import com.engineerpro.example.redis.model.User;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 public class UserPrincipal implements OAuth2User, UserDetails {
 
-    private UUID id;
+    private Long id;
     private String username;
     private String password;
     private String name;
@@ -31,7 +30,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
-    public UserPrincipal(UUID id, String username, String password,
+    public UserPrincipal(Long id, String username, String password,
             Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
@@ -40,7 +39,9 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     }
 
     public static UserPrincipal create(User user) {
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        List<GrantedAuthority> authorities = user.getAuthorities().stream()
+            .map(authority -> new SimpleGrantedAuthority(authority.getAuthority()))
+            .collect(Collectors.toList());
 
         UserPrincipal userPrincipal = new UserPrincipal(
                 user.getId(),

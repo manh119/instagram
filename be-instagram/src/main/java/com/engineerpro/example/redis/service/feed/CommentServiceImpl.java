@@ -49,7 +49,7 @@ public class CommentServiceImpl implements CommentService {
       Post post = postRepository.findById(request.getPostId()).orElseThrow(PostNotFoundException::new);
       
       Comment comment = new Comment();
-      comment.setContent(request.getComment()); // Use the new field name
+      comment.setContent(request.getComment()); // Use the correct field name
       comment.setCreatedAt(new Date());
       comment.setCreatedBy(profile);
       comment.setPost(post);

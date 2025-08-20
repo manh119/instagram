@@ -10,7 +10,7 @@ const useLikePost = (post) => {
 	const [isUpdating, setIsUpdating] = useState(false);
 	const { user: authUser, logout } = useAuth();
 	const showToast = useShowToast();
-	const { posts, setPosts } = usePostStore();
+	const { posts, setPosts, updatePost } = usePostStore();
 
 	// Initialize like state
 	useEffect(() => {
@@ -96,17 +96,18 @@ const useLikePost = (post) => {
 				) || false);
 			}
 
-			// Update posts store
-			const updatedPosts = posts.map(p => {
-				if (p.id === post.id) {
-					return {
-						...p,
-						userLikes: response?.post?.userLikes || likes
-					};
-				}
-				return p;
-			});
-			setPosts(updatedPosts);
+			// Update posts store with the actual server response
+			if (response && response.post) {
+				console.log('useLikePost - Updating store with response:', response.post);
+				console.log('useLikePost - New userLikes:', response.post.userLikes);
+
+				// Use the new updatePost function for more efficient updates
+				updatePost(post.id, {
+					userLikes: response.post.userLikes || []
+				});
+
+				console.log('useLikePost - Store updated using updatePost');
+			}
 
 		} catch (error) {
 			console.error("Error toggling like:", error);
@@ -130,7 +131,7 @@ const useLikePost = (post) => {
 		} finally {
 			setIsUpdating(false);
 		}
-	}, [isLiked, likes, isUpdating, authUser, post?.id, posts, setPosts, showToast, logout]);
+	}, [isLiked, likes, isUpdating, authUser, post?.id, posts, setPosts, updatePost, showToast, logout]);
 
 	return {
 		isLiked,

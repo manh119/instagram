@@ -56,7 +56,10 @@ public class Comment {
         "id=" + id +
         ", content='" + content + '\'' +
         ", createdAt=" + createdAt +
-        ", createdBy=" + (createdBy != null ? "Profile(id=" + createdBy.getId() + ", username=" + createdBy.getUsername() + ")" : "null") +
+        ", createdBy="
+        + (createdBy != null ? "Profile(id=" + createdBy.getId() + ", username=" + createdBy.getUsername() + ")"
+            : "null")
+        +
         '}';
   }
 }

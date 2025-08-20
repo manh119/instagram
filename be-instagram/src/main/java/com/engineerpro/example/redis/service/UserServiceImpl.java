@@ -1,18 +1,25 @@
 package com.engineerpro.example.redis.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.engineerpro.example.redis.dto.SuggestedUserResponse;
 import com.engineerpro.example.redis.dto.UserPrincipal;
+import com.engineerpro.example.redis.model.Authority;
 import com.engineerpro.example.redis.model.Profile;
+import com.engineerpro.example.redis.model.User;
 import com.engineerpro.example.redis.model.UserFollowing;
+import com.engineerpro.example.redis.repository.AuthorityRepository;
 import com.engineerpro.example.redis.repository.FollowerRepository;
 import com.engineerpro.example.redis.repository.ProfileRepository;
 import com.engineerpro.example.redis.repository.PostRepository;
+import com.engineerpro.example.redis.repository.UserRepository;
 import com.engineerpro.example.redis.service.profile.ProfileService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
@@ -34,6 +41,15 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<SuggestedUserResponse> getSuggestedUsers(UserPrincipal userPrincipal, int limit) {
@@ -132,7 +148,7 @@ public class UserServiceImpl implements UserService {
             
             SuggestedUserResponse response = SuggestedUserResponse.builder()
                 .id(profile.getId()) // Profile ID for follow/unfollow operations
-                .uid(profile.getUserId()) // Use userId as uid for frontend compatibility
+                .uid(profile.getUser().getId().toString()) // Use user ID as uid for frontend compatibility
                 .username(profile.getUsername())
                 .profilePicURL(profile.getProfileImageUrl()) // Map from profileImageUrl
                 .fullName(profile.getDisplayName()) // Map from displayName
@@ -154,5 +170,53 @@ public class UserServiceImpl implements UserService {
                 "profileId", profile.getId(), "error", e.getMessage());
             throw e;
         }
+    }
+
+    @Override
+    public User createUser(String username, String password, String name) {
+        LoggingUtil.logBusinessEvent(logger, "Creating new user", "username", username, "name", name);
+        
+        try {
+            // Check if username already exists
+            if (existsByUsername(username)) {
+                throw new RuntimeException("Username already exists: " + username);
+            }
+            
+            // Create new user
+            User user = User.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .name(name)
+                .enabled(true)
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .build();
+            
+            // Set default authority (USER role)
+            Authority userAuthority = authorityRepository.findByAuthority("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Default user authority not found"));
+            user.setAuthorities(Set.of(userAuthority));
+            
+            User savedUser = userRepository.save(user);
+            
+            LoggingUtil.logBusinessEvent(logger, "User created successfully", 
+                "userId", savedUser.getId(), "username", username);
+            
+            return savedUser;
+        } catch (Exception e) {
+            LoggingUtil.logServiceWarning(logger, "Error creating user", "username", username, "error", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
     }
 }

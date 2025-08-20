@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
 import useUserProfileStore from "../store/userProfileStore";
-import { signInWithEmailAndPasswordMock, findUserByUid } from "../services/mockData";
+import config from "../config/api";
 
 const useLogin = () => {
 	const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,7 @@ const useLogin = () => {
 	const error = null;
 
 	const handleLogin = async (inputs) => {
-		if (!inputs.email || !inputs.password) {
+		if (!inputs.username || !inputs.password) {
 			showToast("Error", "Please fill all the fields", "error");
 			return;
 		}
@@ -21,11 +21,39 @@ const useLogin = () => {
 		setIsLoading(true);
 
 		try {
-			const cred = signInWithEmailAndPasswordMock(inputs.email, inputs.password);
-			const user = findUserByUid(cred.user.uid);
-			const mockToken = "mock.jwt.token.for.testing";
+			const response = await fetch(`${config.api.baseUrl}${config.api.endpoints.auth}/login`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					username: inputs.username,
+					password: inputs.password
+				})
+			});
+
+			if (!response.ok) {
+				if (response.status === 401) {
+					throw new Error("Invalid username or password");
+				}
+				throw new Error("Login failed. Please try again.");
+			}
+
+			const data = await response.json();
+
+			// Create user object for frontend compatibility
+			const user = {
+				uid: data.username, // Use username as uid for now
+				username: data.username,
+				email: inputs.username, // Fallback for compatibility
+				displayName: data.username,
+				following: [], // Initialize empty following array
+				followers: []  // Initialize empty followers array
+			};
+
 			localStorage.setItem("user-info", JSON.stringify(user));
-			await login(user, mockToken);
+			localStorage.setItem("jwt-token", data.token);
+			await login(user, data.token);
 			showToast("Success", "Login successful", "success");
 		} catch (error) {
 			showToast("Error", error.message, "error");

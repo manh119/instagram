@@ -8,7 +8,7 @@ const usePostComment = () => {
 	const [isCommenting, setIsCommenting] = useState(false);
 	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
-	const { posts, setPosts } = usePostStore();
+	const { posts, setPosts, updatePost } = usePostStore();
 
 	const handlePostComment = useCallback(async (postId, commentText) => {
 		if (isCommenting) return;
@@ -48,11 +48,10 @@ const usePostComment = () => {
 			const response = await postService.createComment(postId, commentText);
 
 			if (response && response.post) {
-				// Update with actual server response
-				const finalUpdatedPosts = posts.map(post =>
-					post.id === postId ? response.post : post
-				);
-				setPosts(finalUpdatedPosts);
+				// Update with actual server response using updatePost
+				updatePost(postId, {
+					comments: response.post.comments || []
+				});
 
 				showToast("Success", "Comment posted successfully", "success");
 			} else {
@@ -88,7 +87,7 @@ const usePostComment = () => {
 		} finally {
 			setIsCommenting(false);
 		}
-	}, [isCommenting, authUser, posts, setPosts, showToast]);
+	}, [isCommenting, authUser, posts, setPosts, updatePost, showToast]);
 
 	return { isCommenting, handlePostComment };
 };

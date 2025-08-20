@@ -2,10 +2,13 @@ package com.engineerpro.example.redis.controller.auth;
 
 import com.engineerpro.example.redis.dto.UserPrincipal;
 import com.engineerpro.example.redis.dto.auth.JwtResponse;
+import com.engineerpro.example.redis.dto.auth.LoginRequest;
 import com.engineerpro.example.redis.dto.auth.RefreshTokenRequest;
+import com.engineerpro.example.redis.dto.auth.RegisterRequest;
 import com.engineerpro.example.redis.dto.auth.UserInfoResponse;
 import com.engineerpro.example.redis.security.JwtTokenUtil;
 import com.engineerpro.example.redis.service.CustomUserDetailsService;
+import com.engineerpro.example.redis.service.UserService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +21,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +41,12 @@ public class AuthController {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/me")
     @Operation(
@@ -144,6 +155,107 @@ public class AuthController {
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PostMapping("/login")
+    @Operation(
+        summary = "Login with username and password",
+        description = "Authenticates a user with username and password and returns JWT token"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Login successful",
+            content = @Content(schema = @Schema(implementation = JwtResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+        @ApiResponse(responseCode = "400", description = "Bad request - missing or invalid input")
+    })
+    public ResponseEntity<JwtResponse> login(
+        @Parameter(description = "Login credentials", required = true)
+        @Valid @RequestBody LoginRequest request) {
+        
+        LoggingUtil.logEntry(logger, "loginRequest", request);
+        
+        try {
+            // Authenticate user
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            
+            if (authentication.isAuthenticated()) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                
+                // Generate JWT token
+                String token = jwtTokenUtil.generateToken(userDetails);
+                
+                JwtResponse response = JwtResponse.builder()
+                        .token(token)
+                        .type("Bearer")
+                        .username(userDetails.getUsername())
+                        .build();
+                
+                LoggingUtil.logExit(logger, "Login successful for user: " + userDetails.getUsername());
+                return ResponseEntity.ok(response);
+            } else {
+                LoggingUtil.logExit(logger, "Authentication failed");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        } catch (Exception e) {
+            LoggingUtil.logError(logger, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PostMapping("/register")
+    @Operation(
+        summary = "Register new user",
+        description = "Creates a new user account with username and password"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User registered successfully",
+            content = @Content(schema = @Schema(implementation = JwtResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Bad request - validation error or username already exists"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<JwtResponse> register(
+        @Parameter(description = "User registration data", required = true)
+        @Valid @RequestBody RegisterRequest request) {
+        
+        LoggingUtil.logEntry(logger, "registerRequest", request);
+        
+        try {
+            // Create new user
+            userService.createUser(request.getUsername(), request.getPassword(), request.getName());
+            
+            // Authenticate the newly created user
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            
+            if (authentication.isAuthenticated()) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                
+                // Generate JWT token
+                String token = jwtTokenUtil.generateToken(userDetails);
+                
+                JwtResponse response = JwtResponse.builder()
+                        .token(token)
+                        .type("Bearer")
+                        .username(userDetails.getUsername())
+                        .build();
+                
+                LoggingUtil.logExit(logger, "Registration successful for user: " + userDetails.getUsername());
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            } else {
+                LoggingUtil.logExit(logger, "Authentication failed after registration");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } catch (Exception e) {
+            LoggingUtil.logError(logger, e);
+            if (e.getMessage().contains("Username already exists")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(JwtResponse.builder().build()); // Empty response for now
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

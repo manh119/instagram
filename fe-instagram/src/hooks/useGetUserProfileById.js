@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import useShowToast from "./useShowToast";
 import userProfileService from "../services/userProfileService";
 
-const useGetUserProfileById = (userId) => {
+const useGetUserProfileById = (userIdOrUsername) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [userProfile, setUserProfile] = useState(null);
 
@@ -10,7 +10,7 @@ const useGetUserProfileById = (userId) => {
 
 	useEffect(() => {
 		const getUserProfile = async () => {
-			if (!userId) {
+			if (!userIdOrUsername) {
 				setIsLoading(false);
 				setUserProfile(null);
 				return;
@@ -20,7 +20,15 @@ const useGetUserProfileById = (userId) => {
 			setUserProfile(null);
 
 			try {
-				const user = await userProfileService.getUserProfileById(userId);
+				let user;
+				// Check if userIdOrUsername is a number (ID) or string (username)
+				if (typeof userIdOrUsername === 'number' || !isNaN(parseInt(userIdOrUsername))) {
+					// It's a numeric ID, use getUserProfileById
+					user = await userProfileService.getUserProfileById(userIdOrUsername);
+				} else {
+					// It's a username string, use getUserProfileByUsername
+					user = await userProfileService.getUserProfileByUsername(userIdOrUsername);
+				}
 				setUserProfile(user);
 			} catch (error) {
 				console.error('Error fetching user profile:', error);
@@ -34,7 +42,7 @@ const useGetUserProfileById = (userId) => {
 		};
 
 		getUserProfile();
-	}, [userId, showToast]);
+	}, [userIdOrUsername, showToast]);
 
 	return { isLoading, userProfile, setUserProfile };
 };

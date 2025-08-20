@@ -5,22 +5,39 @@ import useGetUserProfileById from "../../hooks/useGetUserProfileById";
 import useVideoAutoPlay from "../../hooks/useVideoAutoPlay";
 import videoConfig from "../../config/videoConfig";
 import ResponsiveVideoContainer from "../Common/ResponsiveVideoContainer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import usePostStore from "../../store/postStore";
+import { useNavigate } from "react-router-dom";
 
-const FeedPost = ({ post }) => {
+const FeedPost = ({ post, isDetailPage = false }) => {
 	const [videoError, setVideoError] = useState(false);
 	const [videoLoading, setVideoLoading] = useState(true);
+	const navigate = useNavigate();
+
+	// Get the latest post data from the store to ensure we have the most up-to-date likes/comments
+	const { posts } = usePostStore();
+	const currentPost = posts.find(p => p.id === post.id) || post;
+
+	// Debug logging to see what's happening with the post data
+	useEffect(() => {
+		console.log('FeedPost - Post ID:', post.id);
+		console.log('FeedPost - Original post:', post);
+		console.log('FeedPost - Current post from store:', currentPost);
+		console.log('FeedPost - Store posts count:', posts.length);
+		console.log('FeedPost - Current post userLikes:', currentPost?.userLikes?.length || 0);
+		console.log('FeedPost - Current post comments:', currentPost?.comments?.length || 0);
+	}, [post.id, post, currentPost, posts]);
 
 	// Check if post.createdBy has the necessary profile data for hover functionality
 	// We need at least username and profileImageUrl for the hover preview to work properly
-	const hasCompleteProfile = post.createdBy &&
-		post.createdBy.username &&
-		post.createdBy.profileImageUrl &&
-		post.createdBy.id;
+	const hasCompleteProfile = currentPost.createdBy &&
+		currentPost.createdBy.username &&
+		currentPost.createdBy.profileImageUrl &&
+		currentPost.createdBy.id;
 
 	// If we have a complete profile object, use it; otherwise fetch by ID
-	const creatorProfile = hasCompleteProfile ? post.createdBy : null;
-	const profileId = post.createdBy?.id;
+	const creatorProfile = hasCompleteProfile ? currentPost.createdBy : null;
+	const profileId = currentPost.createdBy?.id;
 
 	// Always fetch profile data if we don't have complete data
 	const { userProfile: fetchedProfile } = useGetUserProfileById(profileId);
@@ -36,7 +53,7 @@ const FeedPost = ({ post }) => {
 		handleVideoPlay,
 		handleVideoPause,
 		handleVideoEnded
-	} = useVideoAutoPlay(post.videoUrl, {
+	} = useVideoAutoPlay(currentPost.videoUrl, {
 		visibilityThreshold: videoConfig.autoPlay.visibilityThreshold,
 		pauseThreshold: videoConfig.autoPlay.pauseThreshold,
 		rootMargin: videoConfig.autoPlay.rootMargin,
@@ -47,12 +64,12 @@ const FeedPost = ({ post }) => {
 		setVideoError(true);
 		setVideoLoading(false);
 		if (videoConfig.debug.consoleLogs) {
-			console.error('Video failed to load:', post.videoUrl, e);
+			console.error('Video failed to load:', currentPost.videoUrl, e);
 		}
 	};
 
 	const renderMedia = () => {
-		if (post.videoUrl) {
+		if (currentPost.videoUrl) {
 			return (
 				<VStack spacing={2} w="100%">
 					{videoLoading && (
@@ -68,7 +85,7 @@ const FeedPost = ({ post }) => {
 					<ResponsiveVideoContainer variant="feed">
 						<video
 							ref={videoRef}
-							src={post.videoUrl}
+							src={currentPost.videoUrl}
 							controls={videoConfig.behavior.controls}
 							muted={videoConfig.behavior.muted}
 							loop={videoConfig.behavior.loop}
@@ -90,21 +107,36 @@ const FeedPost = ({ post }) => {
 					</ResponsiveVideoContainer>
 				</VStack>
 			);
-		} else if (post.imageUrl) {
+		} else if (currentPost.imageUrl) {
 			return (
-				<Image src={post.imageUrl} alt={"FEED POST IMG"} />
+				<Image src={currentPost.imageUrl} alt={"FEED POST IMG"} />
 			);
 		}
 		return null;
 	};
 
+	// Handle post click to navigate to detail page
+	const handlePostClick = () => {
+		if (!isDetailPage) {
+			navigate(`/posts/${currentPost.id}`);
+		}
+	};
+
 	return (
 		<div ref={containerRef}>
-			<PostHeader post={post} creatorProfile={finalCreatorProfile} />
-			<Box my={2} borderRadius={4} overflow={"hidden"}>
+			<PostHeader post={currentPost} creatorProfile={finalCreatorProfile} />
+			<Box
+				my={2}
+				borderRadius={4}
+				overflow={"hidden"}
+				cursor={isDetailPage ? "default" : "pointer"}
+				onClick={handlePostClick}
+				_hover={!isDetailPage ? { opacity: 0.9 } : {}}
+				transition="opacity 0.2s"
+			>
 				{renderMedia()}
 			</Box>
-			<PostFooter post={post} creatorProfile={finalCreatorProfile} />
+			<PostFooter post={currentPost} creatorProfile={finalCreatorProfile} />
 		</div>
 	);
 };

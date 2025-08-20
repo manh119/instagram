@@ -7,7 +7,6 @@ const Signup = () => {
 	const [inputs, setInputs] = useState({
 		fullName: "",
 		username: "",
-		email: "",
 		password: "",
 	});
 	const [showPassword, setShowPassword] = useState(false);
@@ -15,14 +14,7 @@ const Signup = () => {
 
 	return (
 		<>
-			<Input
-				placeholder='Email'
-				fontSize={14}
-				type='email'
-				size={"sm"}
-				value={inputs.email}
-				onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
-			/>
+
 			<Input
 				placeholder='Username'
 				fontSize={14}

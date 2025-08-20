@@ -59,13 +59,39 @@ const NotificationItem = ({
             onMarkAsRead(notification.id);
         }
 
-        // Navigate based on notification type
-        if (notification.relatedPostId) {
-            // For now, just navigate to home since we don't have individual post pages
-            navigate('/');
-        } else if (notification.senderId) {
-            // Navigate to user profile
-            navigate(`/profiles/${notification.senderId}`);
+        // Navigate based on notification type and available data
+        switch (notification.type) {
+            case 'LIKE':
+            case 'COMMENT':
+            case 'LIKE_COMMENT':
+            case 'NEW_POST':
+                // Navigate to post detail if we have a post ID
+                if (notification.relatedPostId) {
+                    navigate(`/posts/${notification.relatedPostId}`);
+                } else {
+                    // Fallback to home if no post ID
+                    navigate('/');
+                }
+                break;
+
+            case 'FOLLOW':
+            case 'UNFOLLOW':
+            case 'MENTION':
+                // Navigate to sender's profile if we have sender info
+                if (notification.sender && notification.sender.id) {
+                    navigate(`/profiles/${notification.sender.id}`);
+                } else if (notification.senderId) {
+                    navigate(`/profiles/${notification.senderId}`);
+                } else {
+                    // Fallback to home if no sender info
+                    navigate('/');
+                }
+                break;
+
+            default:
+                // Default fallback to home
+                navigate('/');
+                break;
         }
     };
 

@@ -11,9 +11,11 @@ import com.engineerpro.example.redis.dto.profile.UpdateProfileRequest;
 import com.engineerpro.example.redis.dto.profile.GetProfileResponse;
 import com.engineerpro.example.redis.exception.UserNotFoundException;
 import com.engineerpro.example.redis.model.Profile;
+import com.engineerpro.example.redis.model.User;
 import com.engineerpro.example.redis.repository.ProfileRepository;
 import com.engineerpro.example.redis.repository.FollowerRepository;
 import com.engineerpro.example.redis.repository.PostRepository;
+import com.engineerpro.example.redis.repository.UserRepository;
 import com.engineerpro.example.redis.service.UploadService;
 
 @Service
@@ -27,13 +29,19 @@ public class ProfileServiceImpl implements ProfileService {
   @Autowired
   private PostRepository postRepository;
 
+  @Autowired
+  private UserRepository userRepository;
+
   @Override
   public Profile getUserProfile(UserPrincipal userPrincipal) {
-    Profile profile = profileRepository.findOneByUserId(userPrincipal.getId().toString());
+    User user = userRepository.findById(userPrincipal.getId()).orElseThrow(UserNotFoundException::new);
+    Profile profile = profileRepository.findOneByUser(user);
     if (Objects.isNull(profile)) {
-      profile = new Profile();
-      profile.setUserId(userPrincipal.getId().toString());
-      profile.setDisplayName(userPrincipal.getName());
+      profile = Profile.builder()
+        .user(user)
+        .displayName(userPrincipal.getName())
+        .username(userPrincipal.getUsername())
+        .build();
       profileRepository.save(profile);
     }
     return profile;
@@ -82,5 +90,27 @@ public class ProfileServiceImpl implements ProfileService {
     profile.setProfileImageUrl(url);
     profileRepository.save(profile);
     return profile;
+  }
+
+  @Override
+  public GetProfileResponse getUserProfileByUsername(String username) {
+    Profile profile = profileRepository.findOneByUsername(username)
+        .orElseThrow(UserNotFoundException::new);
+    
+    // Get follower count for this profile
+    int followersCount = followerRepository.countByFollowingUserId(profile.getId());
+    
+    // Get following count for this profile
+    int followingCount = followerRepository.countByFollowerUserId(profile.getId());
+    
+    // Get posts count for this profile
+    int postsCount = postRepository.countByCreatedBy(profile);
+    
+    return GetProfileResponse.builder()
+        .profile(profile)
+        .followersCount(followersCount)
+        .followingCount(followingCount)
+        .postsCount(postsCount)
+        .build();
   }
 }

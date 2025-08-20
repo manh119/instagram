@@ -93,6 +93,21 @@ public class ProfileController {
     }
   }
 
+  @GetMapping("/username/{username}")
+  public ResponseEntity<GetProfileResponse> getProfileByUsername(@PathVariable String username) {
+    LoggingUtil.logControllerEntry(logger, "getProfileByUsername", "username", username);
+    
+    try {
+      GetProfileResponse response = profileService.getUserProfileByUsername(username);
+      
+      LoggingUtil.logControllerExit(logger, "getProfileByUsername", response);
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getProfileByUsername", e);
+      throw e;
+    }
+  }
+
   @GetMapping("/me")
   public ResponseEntity<GetProfileResponse> getProfile(Authentication authentication) {
     LoggingUtil.logControllerEntry(logger, "getProfile", "authentication", authentication != null ? "present" : "null");

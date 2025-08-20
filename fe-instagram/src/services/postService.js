@@ -266,6 +266,26 @@ class PostService {
         }
     }
 
+    // Get a single post with all relationships (for post detail page)
+    async getPostWithRelationships(postId) {
+        try {
+            const response = await fetch(`${this.baseURL}/posts/${postId}/with-relationships`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error getting post with relationships:', error);
+            throw error;
+        }
+    }
+
     // Toggle like/unlike a post (convenience method)
     async toggleLike(postId, isCurrentlyLiked) {
         try {

@@ -13,6 +13,8 @@ public interface ProfileService {
 
   GetProfileResponse getUserProfileWithCounts(int id);
 
+  GetProfileResponse getUserProfileByUsername(String username);
+
   Profile updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request);
 
   Profile updateProfileImage(UserPrincipal userPrincipal, UpdateProfileImageRequest request);

@@ -23,21 +23,24 @@ const useFollowUser = (profileId) => {
 			if (isFollowing) {
 				// Unfollow
 				await postService.unfollowUser(profileId);
+				const currentFollowing = authUser.following || [];
 				setAuthUser({
 					...authUser,
-					following: authUser.following.filter((uid) => uid !== profileId),
+					following: currentFollowing.filter((uid) => uid !== profileId),
 				});
-				if (userProfile)
+				if (userProfile) {
+					const currentFollowers = userProfile.followers || [];
 					setUserProfile({
 						...userProfile,
-						followers: userProfile.followers.filter((uid) => uid !== authUser.uid),
+						followers: currentFollowers.filter((uid) => uid !== authUser.uid),
 					});
+				}
 
 				localStorage.setItem(
 					"user-info",
 					JSON.stringify({
 						...authUser,
-						following: authUser.following.filter((uid) => uid !== profileId),
+						following: currentFollowing.filter((uid) => uid !== profileId),
 					})
 				);
 				setIsFollowing(false);
@@ -45,22 +48,25 @@ const useFollowUser = (profileId) => {
 			} else {
 				// Follow
 				await postService.followUser(profileId);
+				const currentFollowing = authUser.following || [];
 				setAuthUser({
 					...authUser,
-					following: [...authUser.following, profileId],
+					following: [...currentFollowing, profileId],
 				});
 
-				if (userProfile)
+				if (userProfile) {
+					const currentFollowers = userProfile.followers || [];
 					setUserProfile({
 						...userProfile,
-						followers: [...userProfile.followers, authUser.uid],
+						followers: [...currentFollowers, authUser.uid],
 					});
+				}
 
 				localStorage.setItem(
 					"user-info",
 					JSON.stringify({
 						...authUser,
-						following: [...authUser.following, profileId],
+						following: [...currentFollowing, profileId],
 					})
 				);
 				setIsFollowing(true);
@@ -76,7 +82,7 @@ const useFollowUser = (profileId) => {
 
 	useEffect(() => {
 		if (authUser && profileId && profileId !== 0) {
-			const isFollowing = authUser.following.includes(profileId);
+			const isFollowing = authUser.following && Array.isArray(authUser.following) ? authUser.following.includes(profileId) : false;
 			setIsFollowing(isFollowing);
 		} else {
 			setIsFollowing(false);

@@ -4,19 +4,19 @@ import useLogin from "../../hooks/useLogin";
 
 const Login = () => {
 	const [inputs, setInputs] = useState({
-		email: "",
+		username: "",
 		password: "",
 	});
 	const { loading, error, login } = useLogin();
 	return (
 		<>
 			<Input
-				placeholder='Email'
+				placeholder='Username'
 				fontSize={14}
-				type='email'
+				type='text'
 				size={"sm"}
-				value={inputs.email}
-				onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
+				value={inputs.username}
+				onChange={(e) => setInputs({ ...inputs, username: e.target.value })}
 			/>
 			<Input
 				placeholder='Password'
