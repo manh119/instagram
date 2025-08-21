@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -106,6 +107,7 @@ public class NotificationController {
 
     // Mark a notification as read
     @PutMapping("/{id}/read")
+    @Transactional
     public ResponseEntity<?> markAsRead(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal,
             @PathVariable Long id) {
@@ -135,7 +137,7 @@ public class NotificationController {
             LoggingUtil.logBusinessEvent(logger, "Notification marked as read successfully", 
                 "Username", userPrincipal.getUsername(), "NotificationId", id);
             
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new SuccessResponse("Notification marked as read successfully"));
             
         } catch (Exception e) {
             LoggingUtil.logServiceWarning(logger, "Failed to mark notification as read", 
@@ -146,6 +148,7 @@ public class NotificationController {
 
     // Mark all notifications as read
     @PutMapping("/read-all")
+    @Transactional
     public ResponseEntity<?> markAllAsRead(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal) {
         
@@ -159,7 +162,7 @@ public class NotificationController {
             LoggingUtil.logBusinessEvent(logger, "All notifications marked as read successfully", 
                 "Username", userPrincipal.getUsername());
             
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new SuccessResponse("All notifications marked as read successfully"));
             
         } catch (Exception e) {
             LoggingUtil.logServiceWarning(logger, "Failed to mark all notifications as read", 
@@ -170,6 +173,7 @@ public class NotificationController {
 
     // Delete a notification
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> deleteNotification(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal,
             @PathVariable Long id) {
@@ -199,7 +203,7 @@ public class NotificationController {
             LoggingUtil.logBusinessEvent(logger, "Notification deleted successfully", 
                 "Username", userPrincipal.getUsername(), "NotificationId", id);
             
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new SuccessResponse("Notification deleted successfully"));
             
         } catch (Exception e) {
             LoggingUtil.logServiceWarning(logger, "Failed to delete notification", 
@@ -210,6 +214,7 @@ public class NotificationController {
 
     // Delete all read notifications
     @DeleteMapping("/read")
+    @Transactional
     public ResponseEntity<?> deleteAllRead(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal) {
         
@@ -231,7 +236,7 @@ public class NotificationController {
             LoggingUtil.logBusinessEvent(logger, "All read notifications deleted successfully", 
                 "Username", userPrincipal.getUsername(), "DeletedCount", readNotifications.size());
             
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new SuccessResponse("All read notifications deleted successfully"));
             
         } catch (Exception e) {
             LoggingUtil.logServiceWarning(logger, "Failed to delete read notifications", 
@@ -288,5 +293,18 @@ public class NotificationController {
         }
 
         public long getCount() { return count; }
+    }
+
+    public static class SuccessResponse {
+        private String message;
+        private boolean success;
+
+        public SuccessResponse(String message) {
+            this.message = message;
+            this.success = true;
+        }
+
+        public String getMessage() { return message; }
+        public boolean isSuccess() { return success; }
     }
 }

@@ -30,12 +30,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findBySenderAndRecipientAndTypeOrderByCreatedAtDesc(Profile sender, Profile recipient, String type);
     
     // Mark notifications as read
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.recipient = :recipient")
     void markAllAsReadByRecipient(@Param("recipient") Profile recipient);
     
     // Mark specific notification as read
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.id = :id")
     void markAsReadById(@Param("id") Long id);
     
