@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import notificationService from '../services/notificationService';
+import webSocketService from '../services/websocketService';
 import useShowToast from './useShowToast';
 
 const useNotifications = () => {
@@ -9,12 +10,62 @@ const useNotifications = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(1);
+    const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
     const { user: authUser } = useAuth();
     const showToast = useShowToast();
 
     const limit = 20;
 
-    // Fetch notifications
+    // Initialize WebSocket connection
+    useEffect(() => {
+        if (authUser && authUser.id) {
+            // Set up WebSocket callbacks
+            webSocketService.onNotification((notification) => {
+                handleWebSocketNotification(notification);
+            });
+
+            webSocketService.onUnreadCount((count) => {
+                setUnreadCount(count);
+            });
+
+            webSocketService.onConnectionChange((connected) => {
+                setIsWebSocketConnected(connected);
+            });
+
+            // Connect to WebSocket
+            webSocketService.connect(authUser.id);
+
+            // Cleanup on unmount
+            return () => {
+                webSocketService.disconnect();
+            };
+        }
+    }, [authUser]);
+
+    // Handle incoming WebSocket notifications
+    const handleWebSocketNotification = useCallback((notification) => {
+        setNotifications(prev => {
+            // Check if notification already exists
+            const exists = prev.some(n => n.id === notification.id);
+            if (!exists) {
+                // Add new notification at the beginning
+                return [notification, ...prev];
+            }
+            return prev;
+        });
+
+        // Update unread count if notification is unread
+        if (!notification.isRead) {
+            setUnreadCount(prev => prev + 1);
+        }
+
+        // Show toast for new notifications
+        if (!notification.isRead) {
+            showToast("New Notification", notification.message, "info");
+        }
+    }, [showToast]);
+
+    // Fetch notifications (fallback for initial load)
     const fetchNotifications = useCallback(async (pageNum = 1, append = false) => {
         if (!authUser) return;
 
@@ -38,7 +89,7 @@ const useNotifications = () => {
         }
     }, [authUser, showToast]);
 
-    // Fetch unread count
+    // Fetch unread count (fallback for initial load)
     const fetchUnreadCount = useCallback(async () => {
         if (!authUser) return;
 
@@ -74,6 +125,10 @@ const useNotifications = () => {
             // Update unread count
             setUnreadCount(prev => Math.max(0, prev - 1));
 
+            // Acknowledge via WebSocket
+            webSocketService.acknowledgeNotification(notificationId);
+
+            showToast("Success", "Notification marked as read", "success");
         } catch (error) {
             showToast("Error", "Failed to mark notification as read", "error");
         }
@@ -139,21 +194,20 @@ const useNotifications = () => {
         fetchUnreadCount();
     }, [fetchNotifications, fetchUnreadCount]);
 
-    // Initial load
+    // Initial load (only if WebSocket is not connected)
     useEffect(() => {
-        if (authUser) {
+        if (authUser && !isWebSocketConnected) {
             fetchNotifications(1, false);
             fetchUnreadCount();
         }
-    }, [authUser, fetchNotifications, fetchUnreadCount]);
+    }, [authUser, isWebSocketConnected, fetchNotifications, fetchUnreadCount]);
 
     return {
         notifications,
         unreadCount,
         isLoading,
         hasMore,
-        fetchNotifications,
-        fetchUnreadCount,
+        isWebSocketConnected,
         loadMore,
         markAsRead,
         markAllAsRead,

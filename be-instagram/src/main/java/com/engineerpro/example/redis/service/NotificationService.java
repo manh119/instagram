@@ -28,6 +28,9 @@ public class NotificationService {
     
     @Autowired
     private FollowerRepository followerRepository;
+    
+    @Autowired
+    private NotificationWebSocketService webSocketService;
 
     // Create follow notification
     public void createFollowNotification(Profile follower, Profile following) {
@@ -48,7 +51,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Follow notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(following, notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Follow notification created and sent", 
                 "Follower", follower.getUsername(), 
                 "Following", following.getUsername());
                 
@@ -79,7 +85,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Unfollow notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(following, notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Unfollow notification created and sent", 
                 "Follower", follower.getUsername(), 
                 "Following", following.getUsername());
                 
@@ -111,7 +120,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Like notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(post.getCreatedBy(), notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Like notification created and sent", 
                 "Liker", liker.getUsername(), 
                 "PostCreator", post.getCreatedBy().getUsername(),
                 "PostId", post.getId());
@@ -148,7 +160,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Comment notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(post.getCreatedBy(), notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Comment notification created and sent", 
                 "Commenter", commenter.getUsername(), 
                 "PostCreator", post.getCreatedBy().getUsername(),
                 "PostId", post.getId(),
@@ -183,7 +198,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Like comment notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(comment.getCreatedBy(), notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Like comment notification created and sent", 
                 "Liker", liker.getUsername(), 
                 "CommentCreator", comment.getCreatedBy().getUsername(),
                 "CommentId", comment.getId());
@@ -217,7 +235,10 @@ public class NotificationService {
 
             notificationRepository.save(notification);
             
-            LoggingUtil.logBusinessEvent(logger, "Mention notification created", 
+            // Send real-time notification via WebSocket
+            webSocketService.sendNotificationToUser(mentionedUser, notification);
+            
+            LoggingUtil.logBusinessEvent(logger, "Mention notification created and sent", 
                 "Mentioner", mentioner.getUsername(), 
                 "MentionedUser", mentionedUser.getUsername(),
                 "PostId", post.getId(),
@@ -254,9 +275,14 @@ public class NotificationService {
                     .build();
 
                 notificationRepository.save(notification);
+                
+                // Send real-time notification via WebSocket
+                if (notification.getRecipient() != null) {
+                    webSocketService.sendNotificationToUser(notification.getRecipient(), notification);
+                }
             }
             
-            LoggingUtil.logBusinessEvent(logger, "New post notifications created", 
+            LoggingUtil.logBusinessEvent(logger, "New post notifications created and sent", 
                 "PostCreator", postCreator.getUsername(),
                 "PostId", post.getId(),
                 "FollowerCount", followers.size());

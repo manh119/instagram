@@ -22,6 +22,7 @@ import com.engineerpro.example.redis.model.Notification;
 import com.engineerpro.example.redis.model.Profile;
 import com.engineerpro.example.redis.repository.NotificationRepository;
 import com.engineerpro.example.redis.service.profile.ProfileService;
+import com.engineerpro.example.redis.service.NotificationWebSocketService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
 import org.slf4j.Logger;
@@ -37,8 +38,11 @@ public class NotificationController {
     
     @Autowired
     private ProfileService profileService;
+    
+    @Autowired
+    private NotificationWebSocketService webSocketService;
 
-    // Get all notifications for the current user with pagination
+    // Get all notifications for the current user with pagination (fallback for WebSocket failures)
     @GetMapping
     public ResponseEntity<?> getNotifications(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal,
@@ -46,7 +50,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "20") int limit) {
         
         try {
-            LoggingUtil.logBusinessEvent(logger, "Fetching notifications", 
+            LoggingUtil.logBusinessEvent(logger, "Fetching notifications via REST fallback", 
                 "Username", userPrincipal.getUsername(), "Page", page, "Limit", limit);
             
             Profile profile = profileService.getUserProfile(userPrincipal);
@@ -63,7 +67,7 @@ public class NotificationController {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
             
-            LoggingUtil.logBusinessEvent(logger, "Notifications fetched successfully", 
+            LoggingUtil.logBusinessEvent(logger, "Notifications fetched successfully via REST", 
                 "Username", userPrincipal.getUsername(), "Count", notificationResponses.size());
             
             return ResponseEntity.ok(new NotificationListResponse(
@@ -75,31 +79,31 @@ public class NotificationController {
             ));
             
         } catch (Exception e) {
-            LoggingUtil.logServiceWarning(logger, "Failed to fetch notifications", 
+            LoggingUtil.logServiceWarning(logger, "Failed to fetch notifications via REST", 
                 "Username", userPrincipal.getUsername(), "Error", e.getMessage());
             return ResponseEntity.internalServerError().body("Failed to fetch notifications");
         }
     }
 
-    // Get unread notifications count
+    // Get unread notifications count (fallback for WebSocket failures)
     @GetMapping("/unread/count")
     public ResponseEntity<?> getUnreadCount(
             @AuthenticationPrincipal com.engineerpro.example.redis.dto.UserPrincipal userPrincipal) {
         
         try {
-            LoggingUtil.logBusinessEvent(logger, "Fetching unread count", 
+            LoggingUtil.logBusinessEvent(logger, "Fetching unread count via REST fallback", 
                 "Username", userPrincipal.getUsername());
             
             Profile profile = profileService.getUserProfile(userPrincipal);
             long unreadCount = notificationRepository.countByRecipientAndIsReadFalse(profile);
             
-            LoggingUtil.logBusinessEvent(logger, "Unread count fetched successfully", 
+            LoggingUtil.logBusinessEvent(logger, "Unread count fetched successfully via REST", 
                 "Username", userPrincipal.getUsername(), "Count", unreadCount);
             
             return ResponseEntity.ok(new UnreadCountResponse(unreadCount));
             
         } catch (Exception e) {
-            LoggingUtil.logServiceWarning(logger, "Failed to fetch unread count", 
+            LoggingUtil.logServiceWarning(logger, "Failed to fetch unread count via REST", 
                 "Username", userPrincipal.getUsername(), "Error", e.getMessage());
             return ResponseEntity.internalServerError().body("Failed to fetch unread count");
         }
@@ -134,6 +138,10 @@ public class NotificationController {
             
             notificationRepository.markAsReadById(id);
             
+            // Send unread count update via WebSocket
+            long newUnreadCount = notificationRepository.countByRecipientAndIsReadFalse(profile);
+            webSocketService.sendUnreadCountUpdate(profile, newUnreadCount);
+            
             LoggingUtil.logBusinessEvent(logger, "Notification marked as read successfully", 
                 "Username", userPrincipal.getUsername(), "NotificationId", id);
             
@@ -158,6 +166,9 @@ public class NotificationController {
             
             Profile profile = profileService.getUserProfile(userPrincipal);
             notificationRepository.markAllAsReadByRecipient(profile);
+            
+            // Send unread count update via WebSocket
+            webSocketService.sendUnreadCountUpdate(profile, 0);
             
             LoggingUtil.logBusinessEvent(logger, "All notifications marked as read successfully", 
                 "Username", userPrincipal.getUsername());
@@ -198,7 +209,14 @@ public class NotificationController {
                 return ResponseEntity.status(403).build();
             }
             
+            boolean wasUnread = !notification.getIsRead();
             notificationRepository.deleteById(id);
+            
+            // Send unread count update via WebSocket if notification was unread
+            if (wasUnread) {
+                long newUnreadCount = notificationRepository.countByRecipientAndIsReadFalse(profile);
+                webSocketService.sendUnreadCountUpdate(profile, newUnreadCount);
+            }
             
             LoggingUtil.logBusinessEvent(logger, "Notification deleted successfully", 
                 "Username", userPrincipal.getUsername(), "NotificationId", id);
@@ -223,25 +241,25 @@ public class NotificationController {
                 "Username", userPrincipal.getUsername());
             
             Profile profile = profileService.getUserProfile(userPrincipal);
+            List<Notification> readNotifications = notificationRepository.findByRecipientAndIsReadTrue(profile);
             
-            // Get all read notifications for the user
-            List<Notification> readNotifications = notificationRepository.findByRecipientOrderByCreatedAtDesc(profile)
-                .stream()
-                .filter(n -> n.getIsRead())
-                .collect(Collectors.toList());
+            if (readNotifications.isEmpty()) {
+                return ResponseEntity.ok().body(new SuccessResponse("No read notifications to delete"));
+            }
             
-            // Delete them
             notificationRepository.deleteAll(readNotifications);
             
             LoggingUtil.logBusinessEvent(logger, "All read notifications deleted successfully", 
                 "Username", userPrincipal.getUsername(), "DeletedCount", readNotifications.size());
             
-            return ResponseEntity.ok().body(new SuccessResponse("All read notifications deleted successfully"));
+            return ResponseEntity.ok().body(new SuccessResponse(
+                String.format("Deleted %d read notifications", readNotifications.size())
+            ));
             
         } catch (Exception e) {
-            LoggingUtil.logServiceWarning(logger, "Failed to delete read notifications", 
+            LoggingUtil.logServiceWarning(logger, "Failed to delete all read notifications", 
                 "Username", userPrincipal.getUsername(), "Error", e.getMessage());
-            return ResponseEntity.internalServerError().body("Failed to delete read notifications");
+            return ResponseEntity.internalServerError().body("Failed to delete all read notifications");
         }
     }
 
@@ -292,19 +310,28 @@ public class NotificationController {
             this.count = count;
         }
 
-        public long getCount() { return count; }
+        public long getCount() {
+            return count;
+        }
+
+        public void setCount(long count) {
+            this.count = count;
+        }
     }
 
     public static class SuccessResponse {
         private String message;
-        private boolean success;
 
         public SuccessResponse(String message) {
             this.message = message;
-            this.success = true;
         }
 
-        public String getMessage() { return message; }
-        public boolean isSuccess() { return success; }
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 }

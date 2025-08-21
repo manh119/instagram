@@ -20,6 +20,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // Find unread notifications for a specific recipient
     List<Notification> findByRecipientAndIsReadFalseOrderByCreatedAtDesc(Profile recipient);
     
+    // Find read notifications for a specific recipient
+    List<Notification> findByRecipientAndIsReadTrue(Profile recipient);
+    
     // Count unread notifications for a specific recipient
     long countByRecipientAndIsReadFalse(Profile recipient);
     

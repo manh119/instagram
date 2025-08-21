@@ -1,13 +1,19 @@
 // vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  build: {
-    sourcemap: true, // for production build
+  define: {
+    global: 'globalThis',
   },
-  server: {
-    sourcemapIgnoreList: () => false, // show source maps for node_modules in dev
+  resolve: {
+    alias: {
+      'sockjs-client': 'sockjs-client/dist/sockjs.min.js'
+    }
   },
-});
+  optimizeDeps: {
+    include: ['@stomp/stompjs']
+  }
+})

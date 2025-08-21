@@ -19,9 +19,12 @@ import {
     Center,
     IconButton,
     Tooltip,
-    useDisclosure
+    useDisclosure,
+    Badge,
+    Alert,
+    AlertIcon
 } from '@chakra-ui/react';
-import { DeleteIcon, CheckIcon, RepeatIcon } from '@chakra-ui/icons';
+import { DeleteIcon, CheckIcon, RepeatIcon, CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { NotificationsLogo } from '../../assets/constants';
 import NotificationItem from './NotificationItem';
 import useNotifications from '../../hooks/useNotifications';
@@ -37,6 +40,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
         unreadCount,
         isLoading,
         hasMore,
+        isWebSocketConnected,
         loadMore,
         markAsRead,
         markAllAsRead,
@@ -68,11 +72,9 @@ const NotificationsModal = ({ isOpen, onClose }) => {
     // Handle mark all as read
     const handleMarkAllAsRead = () => {
         setConfirmAction({
-            title: 'Mark All as Read',
-            message: 'Are you sure you want to mark all notifications as read?',
-            onConfirm: markAllAsRead,
-            confirmText: 'Mark All Read',
-            confirmColor: 'blue'
+            title: "Mark All as Read",
+            message: "Are you sure you want to mark all notifications as read?",
+            action: markAllAsRead
         });
         onConfirmOpen();
     };
@@ -80,34 +82,29 @@ const NotificationsModal = ({ isOpen, onClose }) => {
     // Handle delete all read
     const handleDeleteAllRead = () => {
         setConfirmAction({
-            title: 'Delete Read Notifications',
-            message: 'Are you sure you want to delete all read notifications? This action cannot be undone.',
-            onConfirm: deleteAllRead,
-            confirmText: 'Delete All Read',
-            confirmColor: 'red'
+            title: "Delete All Read",
+            message: "Are you sure you want to delete all read notifications? This action cannot be undone.",
+            action: deleteAllRead
         });
         onConfirmOpen();
     };
 
-    // Handle confirm action
-    const handleConfirmAction = async () => {
-        if (confirmAction?.onConfirm) {
-            await confirmAction.onConfirm();
-        }
-        onConfirmClose();
-        setConfirmAction(null);
+    // Handle refresh
+    const handleRefresh = () => {
+        refreshNotifications();
     };
 
-    // Loading skeleton
+    // Loading skeleton component
     const LoadingSkeleton = () => (
-        <VStack spacing={4} align="stretch">
-            {[1, 2, 3].map((i) => (
-                <Box key={i} p={4} border="1px solid" borderColor={borderColor} borderRadius="lg">
-                    <Flex gap={3}>
+        <VStack spacing={3} align="stretch">
+            {[...Array(3)].map((_, i) => (
+                <Box key={i} p={4} bg={bgColor} border="1px solid" borderColor={borderColor} borderRadius="lg">
+                    <Flex gap={3} align="start">
                         <Skeleton w={8} h={8} borderRadius="full" />
-                        <VStack flex={1} align="start" spacing={2}>
+                        <VStack align="start" flex={1} spacing={2}>
+                            <Skeleton h={4} w="60%" />
                             <SkeletonText noOfLines={2} spacing={2} />
-                            <Skeleton h={3} w="100px" />
+                            <Skeleton h={3} w="40%" />
                         </VStack>
                     </Flex>
                 </Box>
@@ -115,98 +112,108 @@ const NotificationsModal = ({ isOpen, onClose }) => {
         </VStack>
     );
 
-    // Empty state
+    // Empty state component
     const EmptyState = () => (
-        <Center py={10}>
+        <Center py={8}>
             <VStack spacing={4}>
-                <NotificationsLogo />
-                <Text fontSize="lg" fontWeight="semibold" color="gray.500">
+                <Box fontSize="4xl">🔔</Box>
+                <Text fontSize="lg" fontWeight="medium" color="gray.500">
                     No notifications yet
                 </Text>
                 <Text fontSize="sm" color="gray.400" textAlign="center">
-                    When you get notifications, they'll show up here
+                    When you get notifications, they'll appear here
                 </Text>
             </VStack>
         </Center>
     );
 
+    // WebSocket connection status
+    const ConnectionStatus = () => (
+        <Flex align="center" gap={2} mb={4}>
+            <Badge
+                colorScheme={isWebSocketConnected ? "green" : "orange"}
+                variant="subtle"
+                display="flex"
+                alignItems="center"
+                gap={1}
+            >
+                {isWebSocketConnected ? <CheckCircleIcon /> : <WarningIcon />}
+                {isWebSocketConnected ? "Live" : "Offline"}
+            </Badge>
+            {!isWebSocketConnected && (
+                <Text fontSize="xs" color="gray.500">
+                    Using fallback mode
+                </Text>
+            )}
+        </Flex>
+    );
+
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
-                <ModalOverlay backdropFilter="blur(10px)" />
-                <ModalContent bg={bgColor} border="1px solid" borderColor={borderColor}>
+            <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="inside">
+                <ModalOverlay />
+                <ModalContent>
                     <ModalHeader bg={headerBg} borderBottom="1px solid" borderColor={borderColor}>
                         <Flex align="center" justify="space-between">
-                            <HStack spacing={3}>
+                            <Flex align="center" gap={3}>
                                 <NotificationsLogo />
                                 <Text>Notifications</Text>
                                 {unreadCount > 0 && (
-                                    <Box
-                                        bg="blue.500"
-                                        color="white"
-                                        borderRadius="full"
-                                        px={2}
-                                        py={1}
-                                        fontSize="xs"
-                                        fontWeight="bold"
-                                    >
-                                        {unreadCount}
-                                    </Box>
+                                    <Badge colorScheme="red" variant="solid" borderRadius="full">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </Badge>
                                 )}
-                            </HStack>
-
+                            </Flex>
                             <HStack spacing={2}>
                                 <Tooltip label="Refresh">
                                     <IconButton
                                         icon={<RepeatIcon />}
+                                        onClick={handleRefresh}
                                         size="sm"
                                         variant="ghost"
-                                        onClick={refreshNotifications}
-                                        isLoading={isLoading}
                                         aria-label="Refresh notifications"
                                     />
                                 </Tooltip>
+                                <ModalCloseButton position="static" />
                             </HStack>
                         </Flex>
                     </ModalHeader>
 
-                    <ModalCloseButton />
-
                     <ModalBody p={0}>
+                        {/* Connection status */}
+                        <Box p={4} pb={2}>
+                            <ConnectionStatus />
+                        </Box>
+
                         {/* Action buttons */}
-                        {notifications.length > 0 && (
-                            <Box p={4} borderBottom="1px solid" borderColor={borderColor}>
-                                <HStack spacing={3} justify="space-between">
-                                    <HStack spacing={2}>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            colorScheme="blue"
-                                            onClick={handleMarkAllAsRead}
-                                            isDisabled={unreadCount === 0}
-                                        >
-                                            <CheckIcon mr={2} />
-                                            Mark All Read
-                                        </Button>
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            colorScheme="red"
-                                            onClick={handleDeleteAllRead}
-                                            isDisabled={notifications.every(n => !n.isRead)}
-                                        >
-                                            <DeleteIcon mr={2} />
-                                            Clear Read
-                                        </Button>
-                                    </HStack>
-
-                                    <Text fontSize="sm" color="gray.500">
-                                        {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
-                                    </Text>
+                        <Box px={4} pb={4}>
+                            <HStack spacing={2} justify="space-between">
+                                <HStack spacing={2}>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        colorScheme="blue"
+                                        onClick={handleMarkAllAsRead}
+                                        isDisabled={notifications.length === 0 || unreadCount === 0}
+                                    >
+                                        <CheckIcon mr={1} />
+                                        Mark All Read
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        colorScheme="red"
+                                        onClick={handleDeleteAllRead}
+                                        isDisabled={notifications.filter(n => n.isRead).length === 0}
+                                    >
+                                        <DeleteIcon mr={1} />
+                                        Delete Read
+                                    </Button>
                                 </HStack>
-                            </Box>
-                        )}
+                            </HStack>
+                        </Box>
+
+                        <Divider />
 
                         {/* Notifications list */}
                         <Box p={4}>
@@ -250,11 +257,14 @@ const NotificationsModal = ({ isOpen, onClose }) => {
             <ConfirmDialog
                 isOpen={isConfirmOpen}
                 onClose={onConfirmClose}
-                onConfirm={handleConfirmAction}
-                title={confirmAction?.title || ''}
-                message={confirmAction?.message || ''}
-                confirmText={confirmAction?.confirmText || 'Confirm'}
-                confirmColor={confirmAction?.confirmColor || 'blue'}
+                title={confirmAction?.title || ""}
+                message={confirmAction?.message || ""}
+                onConfirm={() => {
+                    if (confirmAction?.action) {
+                        confirmAction.action();
+                    }
+                    onConfirmClose();
+                }}
             />
         </>
     );
