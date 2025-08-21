@@ -20,6 +20,8 @@ const ResponsiveVideoContainer = ({ children, variant = 'feed' }) => {
                 return 'video-grid-container';
             case 'modal':
                 return 'video-modal-container';
+            case 'detail':
+                return 'video-detail-container';
             default:
                 return 'video-container';
         }
@@ -46,6 +48,12 @@ const ResponsiveVideoContainer = ({ children, variant = 'feed' }) => {
                     width: '100%',
                     height: '100%',
                     aspectRatio: '9/16',
+                };
+            case 'detail':
+                return {
+                    width: '100%',
+                    maxHeight: '70vh',
+                    aspectRatio: 'auto',
                 };
             default:
                 return {

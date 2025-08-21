@@ -20,6 +20,8 @@ import {
 	Badge,
 	Image,
 	Avatar,
+	Grid,
+	GridItem,
 } from "@chakra-ui/react";
 import Comment from "../Comment/Comment";
 import usePostComment from "../../hooks/usePostComment";
@@ -29,6 +31,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import postService from "../../services/postService";
 import { NotificationsLogo, UnlikeLogo } from "../../assets/constants";
+import { timeAgo } from "../../utils/timeAgo";
 
 const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	const { handlePostComment, isCommenting } = usePostComment();
@@ -46,6 +49,7 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	const inputBg = useColorModeValue("gray.50", "gray.700");
 	const likeBg = useColorModeValue("red.50", "red.900");
 	const likeBorder = useColorModeValue("red.200", "red.700");
+	const cardBg = useColorModeValue("gray.50", "gray.700");
 
 	const handleSubmitComment = async (e) => {
 		e.preventDefault();
@@ -99,11 +103,7 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 		const handleKeyDown = (e) => {
 			if (!isOpen) return;
 
-			// Press 'C' to focus comment input
-			if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-				e.preventDefault();
-				commentRef.current?.focus();
-			}
+
 		};
 
 		document.addEventListener('keydown', handleKeyDown);
@@ -118,58 +118,72 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	}, [isOpen]);
 
 	const commentCount = post.comments?.length || 0;
+	const likeCount = post.userLikes?.length || 0;
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose} motionPreset="slideInBottom" size="5xl">
+		<Modal isOpen={isOpen} onClose={onClose} motionPreset="slideInBottom" size="6xl">
 			<ModalOverlay backdropFilter="blur(10px)" />
-			<ModalContent bg={bgColor} border="1px solid" borderColor={borderColor} maxW="1100px" mx={4}>
+			<ModalContent bg={bgColor} border="1px solid" borderColor={borderColor} maxW="1200px" mx={4}>
 				<ModalCloseButton />
 				<ModalBody pb={6}>
-					<Flex gap={4} direction={{ base: "column", md: "row" }}>
-						{/* Left Side - Post Image Only (Bigger for Modal) */}
-						<Box flex="1" minW="450px" maxW="550px">
-							{post.imageUrl && (
-								<Box borderRadius="lg" overflow="hidden" boxShadow="lg" w="full">
+					<Grid templateColumns={{ base: "1fr", lg: "1fr 450px" }} gap={6}>
+						{/* Left Side - Post Image/Video */}
+						<GridItem>
+							<Box borderRadius="lg" overflow="hidden" boxShadow="lg" w="full">
+								{post.imageUrl && (
 									<Image
 										src={post.imageUrl}
 										alt="Post image"
 										w="full"
 										h="auto"
 										objectFit="cover"
-										maxH="600px"
+										maxH="700px"
 									/>
-								</Box>
-							)}
-						</Box>
+								)}
+								{post.videoUrl && (
+									<Box as="video"
+										src={post.videoUrl}
+										controls
+										w="full"
+										maxH="700px"
+										objectFit="cover"
+									/>
+								)}
+							</Box>
+						</GridItem>
 
-						{/* Right Side - Caption, Likes, and Comments */}
-						<Box flex="1" minW="250px">
-							<VStack spacing={3} align="stretch">
-								{/* Post Caption - Top Right (Compact) */}
-								{post.caption && (
-									<Box p={3} bg={useColorModeValue("gray.50", "gray.700")} borderRadius="md" border="1px solid" borderColor={useColorModeValue("gray.200", "gray.600")}>
-										<Flex alignItems="center" gap={2} mb={2}>
-											<Avatar
-												size="xs"
-												name={creatorProfile?.username || post.createdBy?.username}
-												src={creatorProfile?.profileImageUrl || post.createdBy?.profileImageUrl}
-											/>
+						{/* Right Side - Content and Comments */}
+						<GridItem>
+							<Flex direction="column" h="700px" maxH="80vh">
+								{/* Post Header */}
+								<Box p={4} bg={cardBg} borderRadius="lg" border="1px solid" borderColor={borderColor} flexShrink={0}>
+									<HStack spacing={3} mb={3}>
+										<Avatar
+											size="sm"
+											name={creatorProfile?.username || post.createdBy?.username}
+											src={creatorProfile?.profileImageUrl || post.createdBy?.profileImageUrl}
+										/>
+										<VStack spacing={0} align="start" flex={1}>
 											<Text fontWeight="bold" fontSize="sm">
 												{creatorProfile?.username || post.createdBy?.username}
 											</Text>
-										</Flex>
-										<Text fontSize="sm" lineHeight="1.4">
+											<Text fontSize="xs" color="gray.500">
+												{timeAgo(post.createdAt)}
+											</Text>
+										</VStack>
+									</HStack>
+
+									{/* Caption */}
+									{post.caption && (
+										<Text fontSize="sm" lineHeight="1.5" color={useColorModeValue("gray.700", "gray.300")} mb={3}>
 											{post.caption}
 										</Text>
-									</Box>
-								)}
+									)}
 
-								{/* Likes Section - Inline Style (Like Post Footer) */}
-								<Flex alignItems="center" justify="space-between" py={2}>
-									<Flex alignItems="center" gap={3}>
-										{/* Like/Unlike Button */}
-										{authUser && (
-											<Tooltip label={isLiked ? "Unlike" : "Like"} placement="top">
+									{/* Post Stats */}
+									<HStack justify="space-between" align="center" pt={2}>
+										<HStack spacing={4}>
+											<HStack spacing={2}>
 												<IconButton
 													icon={isLiked ? <UnlikeLogo /> : <NotificationsLogo />}
 													onClick={handleLikePost}
@@ -184,36 +198,29 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 													transition="all 0.2s"
 													aria-label={isLiked ? "Unlike post" : "Like post"}
 												/>
-											</Tooltip>
-										)}
-
-										{/* Like Count Display */}
-										{post.userLikes && post.userLikes.length > 0 ? (
-											<Text fontSize="sm" color="gray.600" fontWeight="medium">
-												{post.userLikes.length} {post.userLikes.length === 1 ? 'like' : 'likes'}
+												<Text fontSize="sm" fontWeight="medium">
+													{likeCount} {likeCount === 1 ? 'like' : 'likes'}
+												</Text>
+											</HStack>
+											<Text fontSize="sm" fontWeight="medium" color="blue.500">
+												{commentCount} {commentCount === 1 ? 'comment' : 'comments'}
 											</Text>
-										) : (
-											<Text fontSize="sm" color="gray.500" fontStyle="italic">
-												No likes yet
-											</Text>
-										)}
-									</Flex>
-								</Flex>
+										</HStack>
+									</HStack>
+								</Box>
 
-								<Divider />
+								{/* Comments Section */}
+								<Box flex={1} minH={0} display="flex" flexDirection="column">
 
-								{/* Comments Section - Compact */}
-								<Box>
-									<Text fontSize="md" fontWeight="bold" mb={2} color={useColorModeValue("gray.700", "gray.300")}>
-										Comments ({commentCount})
-									</Text>
 
-									{/* Comments list - Reduced Height */}
+									{/* Comments list */}
 									<Box
-										maxH="250px"
+										flex={1}
 										overflowY="auto"
+										overflowX="hidden"
 										ref={commentsContainerRef}
-										px={2}
+										pr={2}
+										minH={0}
 										sx={{
 											'&::-webkit-scrollbar': {
 												width: '6px',
@@ -231,7 +238,7 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 										}}
 									>
 										{commentCount > 0 ? (
-											<VStack spacing={2} align="stretch">
+											<VStack spacing={3} align="stretch" pb={2}>
 												{post.comments.map((comment, idx) => (
 													<Comment
 														key={comment.id || idx}
@@ -249,8 +256,8 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 												))}
 											</VStack>
 										) : (
-											<Box textAlign="center" py={6}>
-												<Text color="gray.500" fontSize="md" mb={1}>
+											<Box textAlign="center" py={8}>
+												<Text color="gray.500" fontSize="md" mb={2}>
 													No comments yet
 												</Text>
 												<Text color="gray.400" fontSize="sm">
@@ -261,19 +268,17 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 									</Box>
 								</Box>
 
-								<Divider />
 
-								{/* Comment input - Compact */}
+
+								{/* Comment Input - Positioned at Bottom */}
 								{authUser && (
-									<Box>
-										<Text fontSize="xs" color="gray.500" mb={2} textAlign="center">
-											💡 Press <Text as="span" fontWeight="bold">C</Text> to focus comment input
-										</Text>
+									<Box p={3} bg={cardBg} borderRadius="lg" border="1px solid" borderColor={borderColor} flexShrink={0}>
+
 										<form onSubmit={handleSubmitComment}>
-											<VStack spacing={2}>
+											<VStack spacing={3}>
 												<Input
 													placeholder="Add a comment..."
-													size="sm"
+													size="md"
 													ref={commentRef}
 													value={comment}
 													onChange={(e) => setComment(e.target.value)}
@@ -292,29 +297,14 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 													}}
 													transition="all 0.2s"
 												/>
-												<Button
-													type="submit"
-													colorScheme="blue"
-													size="sm"
-													isLoading={isCommenting}
-													disabled={!comment.trim()}
-													px={6}
-													borderRadius="full"
-													_hover={{
-														transform: comment.trim() ? "translateY(-1px)" : "none",
-														boxShadow: comment.trim() ? "lg" : "none",
-													}}
-													transition="all 0.2s"
-												>
-													Post Comment
-												</Button>
+
 											</VStack>
 										</form>
 									</Box>
 								)}
-							</VStack>
-						</Box>
-					</Flex>
+							</Flex>
+						</GridItem>
+					</Grid>
 				</ModalBody>
 			</ModalContent>
 		</Modal>

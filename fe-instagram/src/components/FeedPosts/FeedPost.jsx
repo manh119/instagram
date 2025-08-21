@@ -82,7 +82,7 @@ const FeedPost = ({ post, isDetailPage = false }) => {
 							Failed to load video
 						</Text>
 					)}
-					<ResponsiveVideoContainer variant="feed">
+					<ResponsiveVideoContainer variant={isDetailPage ? "detail" : "feed"}>
 						<video
 							ref={videoRef}
 							src={currentPost.videoUrl}
@@ -109,7 +109,13 @@ const FeedPost = ({ post, isDetailPage = false }) => {
 			);
 		} else if (currentPost.imageUrl) {
 			return (
-				<Image src={currentPost.imageUrl} alt={"FEED POST IMG"} />
+				<Image
+					src={currentPost.imageUrl}
+					alt={"FEED POST IMG"}
+					maxH={isDetailPage ? "70vh" : "auto"}
+					objectFit={isDetailPage ? "contain" : "cover"}
+					w="100%"
+				/>
 			);
 		}
 		return null;

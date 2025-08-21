@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -11,23 +11,17 @@ import {
     useToast,
     useColorModeValue,
     Flex,
-    IconButton,
-    Tooltip
+    Badge
 } from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
-import { useAuth } from '../../contexts/AuthContext';
-import useGetUserProfileById from '../../hooks/useGetUserProfileById';
-import useLikePost from '../../hooks/useLikePost';
-import usePostComment from '../../hooks/usePostComment';
-import useDeleteComment from '../../hooks/useDeleteComment';
+import { ArrowBackIcon, ChatIcon, StarIcon } from '@chakra-ui/icons';
 import postService from '../../services/postService';
 import FeedPost from '../../components/FeedPosts/FeedPost';
 import CommentsModal from '../../components/Modals/CommentsModal';
+import { timeAgo } from '../../utils/timeAgo';
 
 const PostDetailPage = () => {
     const { postId } = useParams();
     const navigate = useNavigate();
-    const { user: authUser } = useAuth();
     const toast = useToast();
 
     const [post, setPost] = useState(null);
@@ -38,6 +32,7 @@ const PostDetailPage = () => {
     // Color scheme
     const bgColor = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
+    const cardBg = useColorModeValue('gray.50', 'gray.700');
 
     // Fetch post details
     useEffect(() => {
@@ -103,39 +98,27 @@ const PostDetailPage = () => {
         );
     }
 
+    const commentCount = post.comments?.length || 0;
+    const likeCount = post.userLikes?.length || 0;
+
     return (
         <Container maxW="container.md" py={4}>
             <VStack spacing={4} align="stretch">
-                {/* Header with back button */}
-                <HStack justify="space-between" p={4} bg={bgColor} border="1px solid" borderColor={borderColor} borderRadius="lg">
-                    <Button
-                        variant="ghost"
-                        leftIcon={<ArrowBackIcon />}
-                        onClick={handleBack}
-                        size="sm"
-                    >
-                        Back
-                    </Button>
-                    <Text fontWeight="semibold" fontSize="lg">
-                        Post Details
-                    </Text>
-                    <Box w={8} /> {/* Spacer for centering */}
-                </HStack>
 
-                {/* Post content */}
-                <Box bg={bgColor} border="1px solid" borderColor={borderColor} borderRadius="lg" overflow="hidden">
+
+                {/* Post content - like feed but single post */}
+                <Box
+                    bg={bgColor}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="lg"
+                    overflow="hidden"
+                    maxH="85vh"
+                >
                     <FeedPost post={post} isDetailPage={true} />
                 </Box>
 
-                {/* Quick comment button */}
-                <Button
-                    colorScheme="blue"
-                    onClick={handleOpenComments}
-                    size="lg"
-                    borderRadius="lg"
-                >
-                    💬 View Comments ({post.comments?.length || 0})
-                </Button>
+
             </VStack>
 
             {/* Comments Modal */}

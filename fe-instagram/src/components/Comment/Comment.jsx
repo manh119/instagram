@@ -1,4 +1,4 @@
-import { Avatar, Flex, Skeleton, SkeletonCircle, Text, IconButton, Tooltip, Box, useColorModeValue } from "@chakra-ui/react";
+import { Avatar, Flex, Skeleton, SkeletonCircle, Text, IconButton, Tooltip, Box, useColorModeValue, HStack, VStack } from "@chakra-ui/react";
 import { useState } from "react";
 import useGetUserProfileById from "../../hooks/useGetUserProfileById";
 import ProfileHoverTrigger from "../ProfilePreview/ProfileHoverTrigger";
@@ -15,8 +15,11 @@ const Comment = ({ comment, post, onDelete, isDeleting, canDelete }) => {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	// Color scheme for better UX
-	const bgHover = useColorModeValue("gray.50", "gray.700");
+	const bgColor = useColorModeValue("white", "gray.800");
 	const borderColor = useColorModeValue("gray.200", "gray.600");
+	const hoverBg = useColorModeValue("gray.50", "gray.700");
+	const usernameColor = useColorModeValue("blue.600", "blue.400");
+	const timeColor = useColorModeValue("gray.500", "gray.400");
 
 	// Show skeleton while loading or if no createdBy data
 	if (isLoading || !hasCreatedBy) {
@@ -40,14 +43,19 @@ const Comment = ({ comment, post, onDelete, isDeleting, canDelete }) => {
 	return (
 		<Box
 			p={3}
-			borderRadius="md"
+			borderRadius="lg"
 			border="1px solid"
 			borderColor={borderColor}
-			bg="transparent"
-			_hover={{ bg: bgHover }}
-			transition="all 0.2s"
+			bg={bgColor}
+			_hover={{
+				bg: hoverBg,
+				transform: 'translateY(-1px)',
+				boxShadow: 'sm',
+				borderColor: useColorModeValue('gray.300', 'gray.500')
+			}}
+			transition="all 0.2s ease-in-out"
 		>
-			<Flex gap={4} align="start" w="full">
+			<Flex gap={3} align="start" w="full">
 				<ProfileHoverTrigger profile={userProfile} linkTo={`/profiles/${createdById}`}>
 					<Avatar
 						src={userProfile?.profilePicURL}
@@ -62,55 +70,68 @@ const Comment = ({ comment, post, onDelete, isDeleting, canDelete }) => {
 					/>
 				</ProfileHoverTrigger>
 
-				<Flex direction="column" flex={1} minW={0}>
-					<Flex gap={2} alignItems="center" justify="space-between">
-						<Flex gap={2} alignItems="center" minW={0} flex={1}>
+				<Box flex={1} minW={0}>
+					<VStack spacing={2} align="stretch">
+						{/* Username and timestamp row */}
+						<HStack justify="space-between" align="center">
 							<ProfileHoverTrigger profile={userProfile} linkTo={`/profiles/${createdById}`}>
 								<Text
 									fontWeight="bold"
 									fontSize="sm"
 									cursor="pointer"
+									color={usernameColor}
 									_hover={{
 										textDecoration: "underline",
-										color: "blue.500"
+										color: useColorModeValue("blue.700", "blue.300")
 									}}
 									transition="all 0.2s"
-									color="blue.400"
 								>
 									{createdByUsername}
 								</Text>
 							</ProfileHoverTrigger>
-							<Text fontSize="sm" flex={1} wordBreak="break-word" lineHeight="1.4">
-								{commentText}
-							</Text>
-						</Flex>
 
-						{canDelete && (
-							<Tooltip label="Delete comment" placement="top">
-								<IconButton
-									icon={<DeleteIcon />}
-									size="xs"
-									variant="ghost"
-									colorScheme="red"
-									onClick={handleDeleteClick}
-									isLoading={isDeleting}
-									aria-label="Delete comment"
-									opacity={0.7}
-									_hover={{
-										opacity: 1,
-										bg: "red.50",
-										transform: "scale(1.1)"
-									}}
-									transition="all 0.2s"
-								/>
-							</Tooltip>
-						)}
-					</Flex>
+							{canDelete && (
+								<Tooltip label="Delete comment" placement="top">
+									<IconButton
+										icon={<DeleteIcon />}
+										size="xs"
+										variant="ghost"
+										colorScheme="red"
+										onClick={handleDeleteClick}
+										isLoading={isDeleting}
+										aria-label="Delete comment"
+										opacity={0.6}
+										_hover={{
+											opacity: 1,
+											bg: "red.50",
+											transform: "scale(1.1)"
+										}}
+										transition="all 0.2s"
+									/>
+								</Tooltip>
+							)}
+						</HStack>
 
-					<Text fontSize="xs" color="gray.500" mt={2}>
-						{comment.createdAt ? timeAgo(comment.createdAt) : 'Just now'}
-					</Text>
-				</Flex>
+						{/* Comment text */}
+						<Text
+							fontSize="sm"
+							lineHeight="1.5"
+							color={useColorModeValue("gray.700", "gray.300")}
+							wordBreak="break-word"
+						>
+							{commentText}
+						</Text>
+
+						{/* Timestamp */}
+						<Text
+							fontSize="xs"
+							color={timeColor}
+							fontStyle="italic"
+						>
+							{comment.createdAt ? timeAgo(comment.createdAt) : 'Just now'}
+						</Text>
+					</VStack>
+				</Box>
 			</Flex>
 
 			{/* Delete confirmation dialog */}
@@ -132,14 +153,21 @@ const Comment = ({ comment, post, onDelete, isDeleting, canDelete }) => {
 export default Comment;
 
 const CommentSkeleton = () => {
+	const borderColor = useColorModeValue("gray.200", "gray.600");
+
 	return (
-		<Box p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
-			<Flex gap={4} w="full" alignItems="center">
+		<Box p={3} borderRadius="lg" border="1px solid" borderColor={borderColor}>
+			<Flex gap={3} w="full" alignItems="start">
 				<SkeletonCircle h={8} w={8} />
-				<Flex gap={2} flexDir="column" flex={1}>
-					<Skeleton height={3} width={120} />
-					<Skeleton height={3} width={80} />
-				</Flex>
+				<VStack spacing={2} flex={1} align="stretch">
+					<HStack justify="space-between">
+						<Skeleton height={3} width={100} />
+						<Skeleton height={3} width={20} />
+					</HStack>
+					<Skeleton height={3} width="80%" />
+					<Skeleton height={3} width="60%" />
+					<Skeleton height={2} width={60} />
+				</VStack>
 			</Flex>
 		</Box>
 	);
