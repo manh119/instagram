@@ -1,11 +1,25 @@
 import { Box, Flex, Tooltip, useDisclosure } from "@chakra-ui/react";
+import { useEffect } from "react";
 import { NotificationsLogo } from "../../assets/constants";
 import NotificationsModal from "../Notifications/NotificationsModal";
 import useNotifications from "../../hooks/useNotifications";
 
 const Notifications = () => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const { unreadCount } = useNotifications();
+	const { unreadCount, isWebSocketConnected } = useNotifications();
+
+	// Debug WebSocket and unread count
+	console.log('=== Sidebar Notifications Component ===');
+	console.log('Unread count:', unreadCount);
+	console.log('WebSocket connected:', isWebSocketConnected);
+	console.log('Red dot should show:', unreadCount > 0);
+
+	// Track unread count changes for debugging
+	useEffect(() => {
+		console.log('=== Sidebar Unread Count Changed ===');
+		console.log('New unread count:', unreadCount);
+		console.log('Red dot visibility:', unreadCount > 0 ? 'SHOW' : 'HIDE');
+	}, [unreadCount]);
 
 	return (
 		<>
@@ -29,28 +43,43 @@ const Notifications = () => {
 					onClick={onOpen}
 					position="relative"
 				>
-					<NotificationsLogo />
+					<Box position="relative">
+						<NotificationsLogo />
+						{/* Instagram-style red dot indicator at top-right curve of heart */}
+						{unreadCount > 0 && (
+							<Box
+								position="absolute"
+								top={-1}
+								right={-1}
+								w={2.5}
+								h={2.5}
+								bg="red.500"
+								borderRadius="full"
+								zIndex={1}
+								sx={{
+									'@keyframes pulse': {
+										'0%': { opacity: 0.8 },
+										'50%': { opacity: 1 },
+										'100%': { opacity: 0.8 }
+									}
+								}}
+								animation="pulse 2s ease-in-out infinite"
+								_after={{
+									content: '""',
+									position: 'absolute',
+									top: '-2px',
+									right: '-2px',
+									w: '6px',
+									h: '6px',
+									bg: 'red.500',
+									borderRadius: 'full',
+									opacity: 0.3,
+									animation: 'pulse 2s infinite'
+								}}
+							/>
+						)}
+					</Box>
 					<Box display={{ base: "none", md: "block" }}>Notifications</Box>
-
-					{/* Unread count badge */}
-					{unreadCount > 0 && (
-						<Box
-							position="absolute"
-							top={1}
-							right={1}
-							bg="red.500"
-							color="white"
-							borderRadius="full"
-							px={1.5}
-							py={0.5}
-							fontSize="xs"
-							fontWeight="bold"
-							minW="18px"
-							textAlign="center"
-						>
-							{unreadCount > 99 ? '99+' : unreadCount}
-						</Box>
-					)}
 				</Flex>
 			</Tooltip>
 

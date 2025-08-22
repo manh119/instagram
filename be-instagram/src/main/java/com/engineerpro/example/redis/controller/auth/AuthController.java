@@ -191,6 +191,7 @@ public class AuthController {
                         .token(token)
                         .type("Bearer")
                         .username(userDetails.getUsername())
+                        .userId(((UserPrincipal) userDetails).getId())  // Add numeric user ID
                         .build();
                 
                 LoggingUtil.logExit(logger, "Login successful for user: " + userDetails.getUsername());
@@ -241,6 +242,7 @@ public class AuthController {
                         .token(token)
                         .type("Bearer")
                         .username(userDetails.getUsername())
+                        .userId(((UserPrincipal) userDetails).getId())  // Add numeric user ID
                         .build();
                 
                 LoggingUtil.logExit(logger, "Registration successful for user: " + userDetails.getUsername());

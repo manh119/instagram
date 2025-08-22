@@ -18,52 +18,124 @@ const useNotifications = () => {
 
     // Initialize WebSocket connection
     useEffect(() => {
-        if (authUser && authUser.id) {
-            // Set up WebSocket callbacks
+        console.log('=== NEW CODE RUNNING ===');
+        console.log('useNotifications: useEffect triggered, authUser:', authUser);
+        console.log('useNotifications: webSocketService object:', webSocketService);
+        console.log('useNotifications: webSocketService methods:', Object.getOwnPropertyNames(Object.getOwnPropertyDescriptor(webSocketService, 'connect') ? webSocketService : Object.getPrototypeOf(webSocketService)));
+        // Use uid instead of id since that's what the authUser object has
+        const userId = authUser?.uid || authUser?.id;
+        console.log('Extracted userId:', userId);
+        if (authUser && userId) {
+            console.log('useNotifications: Setting up WebSocket for user:', userId);
+
+            // Set up WebSocket callbacks (only once)
+            console.log('useNotifications: Setting up WebSocket callbacks...');
+
             webSocketService.onNotification((notification) => {
+                console.log('=== WebSocket Notification Callback Fired ===');
+                console.log('useNotifications: Received WebSocket notification:', notification);
+                console.log('Current notifications state length:', notifications.length);
                 handleWebSocketNotification(notification);
+                console.log('After handleWebSocketNotification call');
             });
 
             webSocketService.onUnreadCount((count) => {
+                console.log('=== WebSocket Unread Count Callback Fired ===');
+                console.log('useNotifications: Received WebSocket unread count:', count);
                 setUnreadCount(count);
             });
 
             webSocketService.onConnectionChange((connected) => {
+                console.log('=== WebSocket Connection Change Callback Fired ===');
+                console.log('useNotifications: WebSocket connection changed:', connected);
                 setIsWebSocketConnected(connected);
             });
 
-            // Connect to WebSocket
-            webSocketService.connect(authUser.id);
+            console.log('useNotifications: WebSocket callbacks set up successfully');
+
+            // Connect to WebSocket (only if not already connected to this user)
+            if (!webSocketService.isConnectedToUser(userId)) {
+                console.log('useNotifications: Calling webSocketService.connect...');
+                webSocketService.connect(userId);
+            } else {
+                console.log('useNotifications: WebSocket already connected to user:', userId, 'skipping connection');
+            }
+
+            // Debug current WebSocket state
+            webSocketService.debugState();
+
+            // Check connection health
+            const health = webSocketService.checkConnectionHealth();
+            if (!health.isConnected && !health.connecting) {
+                console.log('useNotifications: WebSocket not connected, attempting manual connection...');
+                webSocketService.forceReset();
+                setTimeout(() => {
+                    webSocketService.connect(userId);
+                }, 1000);
+            }
 
             // Cleanup on unmount
             return () => {
+                console.log('useNotifications: Cleaning up WebSocket connection');
                 webSocketService.disconnect();
             };
+        } else {
+            console.log('useNotifications: No authUser or userId, skipping WebSocket setup. authUser:', authUser, 'userId:', userId);
         }
     }, [authUser]);
 
+    // Debug notifications state changes
+    useEffect(() => {
+        console.log('=== Notifications state changed ===');
+        console.log('New notifications state:', notifications);
+        console.log('Notifications count:', notifications.length);
+    }, [notifications]);
+
+    // Debug unread count state changes
+    useEffect(() => {
+        console.log('=== Unread count state changed ===');
+        console.log('New unread count:', unreadCount);
+    }, [unreadCount]);
+
     // Handle incoming WebSocket notifications
     const handleWebSocketNotification = useCallback((notification) => {
+        console.log('=== handleWebSocketNotification called ===');
+        console.log('Notification to add:', notification);
+        console.log('Current notifications state:', notifications);
+
         setNotifications(prev => {
+            console.log('setNotifications callback - prev state:', prev);
             // Check if notification already exists
             const exists = prev.some(n => n.id === notification.id);
+            console.log('Notification exists check:', exists);
+
             if (!exists) {
-                // Add new notification at the beginning
-                return [notification, ...prev];
+                const newState = [notification, ...prev];
+                console.log('New notifications state:', newState);
+                return newState;
             }
+            console.log('Notification already exists, returning prev state');
             return prev;
         });
 
         // Update unread count if notification is unread
         if (!notification.isRead) {
-            setUnreadCount(prev => prev + 1);
+            console.log('Updating unread count, current:', unreadCount);
+            setUnreadCount(prev => {
+                const newCount = prev + 1;
+                console.log('New unread count:', newCount);
+                return newCount;
+            });
         }
 
         // Show toast for new notifications
         if (!notification.isRead) {
+            console.log('Showing toast for notification');
             showToast("New Notification", notification.message, "info");
         }
-    }, [showToast]);
+
+        console.log('=== handleWebSocketNotification completed ===');
+    }, [showToast, notifications, unreadCount]);
 
     // Fetch notifications (fallback for initial load)
     const fetchNotifications = useCallback(async (pageNum = 1, append = false) => {

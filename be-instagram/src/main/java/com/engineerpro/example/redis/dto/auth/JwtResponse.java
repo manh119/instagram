@@ -13,6 +13,7 @@ public class JwtResponse {
     private String token;
     private String type;
     private String username;
+    private Long userId;  // Add numeric user ID
     private String provider;
     private String providerId;
 }

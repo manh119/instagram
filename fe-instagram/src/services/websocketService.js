@@ -1,8 +1,17 @@
 // WebSocket Service for real-time notifications
 import { Client } from '@stomp/stompjs';
+import { authService } from './authService';
 
 class WebSocketService {
     constructor() {
+        // Prevent multiple instances
+        if (WebSocketService.instance) {
+            console.log('Returning existing WebSocketService instance');
+            return WebSocketService.instance;
+        }
+
+        console.log('Creating new WebSocketService instance');
+
         this.stompClient = null;
         this.isConnected = false;
         this.reconnectAttempts = 0;
@@ -13,24 +22,77 @@ class WebSocketService {
         this.onUnreadCountCallback = null;
         this.onConnectionChangeCallback = null;
         this.userId = null;
+        this.connecting = false;
+        this.receivedNotificationIds = new Set(); // Track received notification IDs
+
+        // Store the instance
+        WebSocketService.instance = this;
+        console.log('WebSocketService instance stored:', WebSocketService.instance);
     }
 
     /**
      * Initialize WebSocket connection
      */
     async connect(userId) {
-        if (this.isConnected) {
-            console.log('WebSocket already connected');
+        console.log('=== WebSocketService.connect called ===');
+        console.log('WebSocketService.connect called with userId:', userId);
+        console.log('Current instance:', this);
+        console.log('Singleton instance:', WebSocketService.instance);
+
+        // Prevent multiple connections for the same user
+        if (this.isConnected && this.userId === userId) {
+            console.log('WebSocket already connected for user:', userId);
             return;
         }
 
+        // If connecting to a different user, disconnect first
+        if (this.isConnected && this.userId !== userId) {
+            console.log('Disconnecting from previous user before connecting to new user');
+            this.disconnect();
+        }
+
+        // Add connection guard to prevent race conditions
+        if (this.connecting) {
+            console.log('WebSocket connection already in progress, skipping...');
+            return;
+        }
+
+        // If we have a failed connection, allow retry after some time
+        if (this.lastConnectionAttempt && Date.now() - this.lastConnectionAttempt < 5000) {
+            console.log('Connection attempt too recent, skipping...');
+            return;
+        }
+
+        this.connecting = true;
+        this.lastConnectionAttempt = Date.now();
         this.userId = userId;
         console.log('Attempting to connect to WebSocket for user:', userId);
+        console.log('User ID type:', typeof userId, 'Value:', userId);
 
         try {
             // Create STOMP client with native WebSocket
-            const wsUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/ws`.replace('http', 'ws');
-            console.log('Connecting to WebSocket URL:', wsUrl);
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+            const wsUrl = `${baseUrl}/ws`.replace('http', 'ws');
+            console.log('Base URL from env:', baseUrl);
+            console.log('WebSocket URL constructed:', wsUrl);
+            console.log('Environment variables:', import.meta.env);
+
+            // Get JWT token for authentication
+            const token = authService.getToken();
+            const connectHeaders = {};
+
+            if (token) {
+                connectHeaders.Authorization = `Bearer ${token}`;
+                console.log('Adding Authorization header to WebSocket connection');
+            } else {
+                console.warn('No JWT token available for WebSocket authentication');
+            }
+
+            console.log('Creating STOMP Client with config:', {
+                brokerURL: wsUrl,
+                reconnectDelay: this.reconnectDelay,
+                connectHeaders: Object.keys(connectHeaders)
+            });
 
             this.stompClient = new Client({
                 brokerURL: wsUrl,
@@ -42,23 +104,53 @@ class WebSocketService {
                 reconnectDelay: this.reconnectDelay,
                 heartbeatIncoming: 4000,
                 heartbeatOutgoing: 4000,
-                connectHeaders: {
-                    // Add any headers if needed
-                }
+                connectHeaders
             });
 
+            console.log('STOMP Client created:', this.stompClient);
+
             // Set up event handlers
+            console.log('Setting up STOMP event handlers...');
             this.stompClient.onConnect = this.onConnect.bind(this);
             this.stompClient.onDisconnect = this.onDisconnect.bind(this);
             this.stompClient.onStompError = this.onStompError.bind(this);
             this.stompClient.onWebSocketError = this.onWebSocketError.bind(this);
+            console.log('Event handlers set up successfully');
 
-            // Connect to WebSocket
+            // Add connection state change listener
+            this.stompClient.onWebSocketClose = () => {
+                console.log('WebSocket connection closed');
+                this.isConnected = false;
+                this.connecting = false;
+            };
+
+            // Connect to WebSocket with timeout
             console.log('Activating STOMP client...');
-            await this.stompClient.activate();
+
+            const connectionPromise = this.stompClient.activate();
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('WebSocket connection timeout')), 10000)
+            );
+
+            await Promise.race([connectionPromise, timeoutPromise]);
+            console.log('STOMP client activation completed');
+
+            // Wait a bit for the connection to establish
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Check if connection actually succeeded
+            if (!this.isConnected) {
+                console.error('STOMP client activation completed but connection failed');
+                this.connecting = false;
+                throw new Error('WebSocket connection failed after activation');
+            }
+
+            this.connecting = false;
 
         } catch (error) {
             console.error('Failed to connect to WebSocket:', error);
+            console.error('Error details:', error.message, error.stack);
+            this.connecting = false;
             this.handleReconnect();
         }
     }
@@ -109,6 +201,7 @@ class WebSocketService {
      */
     onStompError(frame) {
         console.error('STOMP error:', frame);
+        console.error('STOMP error details:', frame.headers, frame.body);
         this.isConnected = false;
 
         // Notify connection change
@@ -122,6 +215,7 @@ class WebSocketService {
      */
     onWebSocketError(error) {
         console.error('WebSocket error:', error);
+        console.error('WebSocket error details:', error.message, error.type);
         this.isConnected = false;
 
         // Notify connection change
@@ -152,6 +246,9 @@ class WebSocketService {
             return;
         }
 
+        // Clear existing subscriptions to prevent duplicates
+        this.clearSubscriptions();
+
         console.log('Subscribing to user channels for user:', this.userId);
 
         // Subscribe to notifications
@@ -161,13 +258,39 @@ class WebSocketService {
                 try {
                     console.log('Received notification message:', message);
                     const notification = JSON.parse(message.body);
+
+                    // Deduplicate notifications by ID
+                    if (this.receivedNotificationIds.has(notification.id)) {
+                        console.log('Duplicate notification detected, skipping:', notification.id);
+                        return;
+                    }
+
+                    // Add to received set
+                    this.receivedNotificationIds.add(notification.id);
+
+                    // Clean up old IDs (keep only last 100)
+                    if (this.receivedNotificationIds.size > 100) {
+                        const idsArray = Array.from(this.receivedNotificationIds);
+                        this.receivedNotificationIds.clear();
+                        idsArray.slice(-50).forEach(id => this.receivedNotificationIds.add(id));
+                    }
+
+                    console.log('=== Processing notification in WebSocket service ===');
+                    console.log('Notification callback exists:', !!this.onNotificationCallback);
+                    console.log('Notification callback function:', this.onNotificationCallback);
+
                     if (this.onNotificationCallback) {
+                        console.log('Calling notification callback...');
                         this.onNotificationCallback(notification);
+                        console.log('Notification callback completed');
+                    } else {
+                        console.warn('No notification callback registered!');
                     }
                 } catch (error) {
                     console.error('Failed to parse notification:', error);
                 }
-            }
+            },
+            { id: `notifications-${this.userId}` } // Add unique subscription ID
         );
 
         // Subscribe to unread count updates
@@ -186,11 +309,11 @@ class WebSocketService {
             }
         );
 
-        // Store subscriptions for cleanup
-        this.subscriptions.set('notifications', notificationSubscription);
-        this.subscriptions.set('unread-count', unreadCountSubscription);
+        // Store subscriptions for cleanup with unique IDs
+        this.subscriptions.set(`notifications-${this.userId}`, notificationSubscription);
+        this.subscriptions.set(`unread-count-${this.userId}`, unreadCountSubscription);
 
-        console.log('Successfully subscribed to user channels');
+        console.log('Successfully subscribed to user channels with IDs:', `notifications-${this.userId}`, `unread-count-${this.userId}`);
     }
 
     /**
@@ -257,16 +380,65 @@ class WebSocketService {
             this.stompClient.deactivate();
         }
         this.isConnected = false;
+        this.connecting = false;
         this.userId = null;
         this.clearSubscriptions();
         this.stopPingInterval();
+        this.receivedNotificationIds.clear(); // Clear received notification IDs
+    }
+
+    /**
+     * Force reset connection state
+     */
+    forceReset() {
+        console.log('Force resetting WebSocket connection state...');
+        this.disconnect();
+        this.lastConnectionAttempt = 0;
+        this.reconnectAttempts = 0;
+    }
+
+    /**
+     * Clear received notification IDs
+     */
+    clearReceivedNotificationIds() {
+        console.log('Clearing received notification IDs...');
+        this.receivedNotificationIds.clear();
+    }
+
+    /**
+ * Check connection health
+ */
+    checkConnectionHealth() {
+        const health = {
+            isConnected: this.isConnected,
+            connecting: this.connecting,
+            stompClientActive: this.stompClient?.active || false,
+            webSocketReadyState: this.stompClient?.webSocket?.readyState || 'N/A',
+            hasStompClient: !!this.stompClient,
+            userId: this.userId,
+            receivedNotificationCount: this.receivedNotificationIds.size
+        };
+
+        console.log('Connection Health Check:', health);
+        return health;
+    }
+
+    /**
+     * Get received notification IDs for debugging
+     */
+    getReceivedNotificationIds() {
+        return Array.from(this.receivedNotificationIds);
     }
 
     /**
      * Set notification callback
      */
     onNotification(callback) {
+        console.log('=== WebSocketService.onNotification called ===');
+        console.log('Previous callback:', this.onNotificationCallback);
+        console.log('New callback:', callback);
         this.onNotificationCallback = callback;
+        console.log('Callback set successfully');
     }
 
     /**
@@ -291,6 +463,29 @@ class WebSocketService {
     }
 
     /**
+     * Check if connected to specific user
+     */
+    isConnectedToUser(userId) {
+        return this.isConnected && this.userId === userId;
+    }
+
+    /**
+     * Debug method to show current state
+     */
+    debugState() {
+        console.log('WebSocket Debug State:', {
+            isConnected: this.isConnected,
+            userId: this.userId,
+            connecting: this.connecting,
+            subscriptionCount: this.subscriptions.size,
+            subscriptions: Array.from(this.subscriptions.keys()),
+            stompClientActive: this.stompClient?.active || false,
+            webSocketReadyState: this.stompClient?.webSocket?.readyState || 'N/A',
+            receivedNotificationCount: this.receivedNotificationIds.size
+        });
+    }
+
+    /**
      * Acknowledge notification
      */
     acknowledgeNotification(notificationId) {
@@ -305,5 +500,11 @@ class WebSocketService {
 
 // Create singleton instance
 const webSocketService = new WebSocketService();
+
+// Add debugging to see if the service is being imported
+console.log('=== WebSocket Service Module Loaded ===');
+console.log('WebSocket service initialized:', webSocketService);
+console.log('WebSocket service methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(webSocketService)));
+console.log('Singleton instance check:', WebSocketService.instance === webSocketService);
 
 export default webSocketService;

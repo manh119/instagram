@@ -43,7 +43,7 @@ const useLogin = () => {
 
 			// Create user object for frontend compatibility
 			const user = {
-				uid: data.username, // Use username as uid for now
+				uid: data.userId, // Use numeric user ID from backend
 				username: data.username,
 				email: inputs.username, // Fallback for compatibility
 				displayName: data.username,

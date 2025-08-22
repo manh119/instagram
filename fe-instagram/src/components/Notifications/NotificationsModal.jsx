@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Modal,
     ModalOverlay,
@@ -17,14 +17,10 @@ import {
     Skeleton,
     SkeletonText,
     Center,
-    IconButton,
-    Tooltip,
     useDisclosure,
-    Badge,
-    Alert,
-    AlertIcon
+    Badge
 } from '@chakra-ui/react';
-import { DeleteIcon, CheckIcon, RepeatIcon, CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
+import { DeleteIcon, CheckIcon } from '@chakra-ui/icons';
 import { NotificationsLogo } from '../../assets/constants';
 import NotificationItem from './NotificationItem';
 import useNotifications from '../../hooks/useNotifications';
@@ -48,6 +44,24 @@ const NotificationsModal = ({ isOpen, onClose }) => {
         deleteAllRead,
         refreshNotifications
     } = useNotifications();
+
+
+
+    // Refresh notifications when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            console.log('=== Modal opened, refreshing notifications ===');
+            refreshNotifications();
+        }
+    }, [isOpen, refreshNotifications]);
+
+    // Refresh notifications when WebSocket connects (if modal is open)
+    useEffect(() => {
+        if (isOpen && isWebSocketConnected) {
+            console.log('=== WebSocket connected, refreshing notifications ===');
+            refreshNotifications();
+        }
+    }, [isOpen, isWebSocketConnected, refreshNotifications]);
 
     // Color scheme
     const bgColor = useColorModeValue('white', 'gray.800');
@@ -89,10 +103,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
         onConfirmOpen();
     };
 
-    // Handle refresh
-    const handleRefresh = () => {
-        refreshNotifications();
-    };
+
 
     // Loading skeleton component
     const LoadingSkeleton = () => (
@@ -121,7 +132,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
                     No notifications yet
                 </Text>
                 <Text fontSize="sm" color="gray.400" textAlign="center">
-                    When you get notifications, they'll appear here
+                    When you get notifications, they&apos;ll appear here
                 </Text>
             </VStack>
         </Center>
@@ -129,23 +140,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
 
     // WebSocket connection status
     const ConnectionStatus = () => (
-        <Flex align="center" gap={2} mb={4}>
-            <Badge
-                colorScheme={isWebSocketConnected ? "green" : "orange"}
-                variant="subtle"
-                display="flex"
-                alignItems="center"
-                gap={1}
-            >
-                {isWebSocketConnected ? <CheckCircleIcon /> : <WarningIcon />}
-                {isWebSocketConnected ? "Live" : "Offline"}
-            </Badge>
-            {!isWebSocketConnected && (
-                <Text fontSize="xs" color="gray.500">
-                    Using fallback mode
-                </Text>
-            )}
-        </Flex>
+        isWebSocketConnected
     );
 
     return (
@@ -159,21 +154,18 @@ const NotificationsModal = ({ isOpen, onClose }) => {
                                 <NotificationsLogo />
                                 <Text>Notifications</Text>
                                 {unreadCount > 0 && (
-                                    <Badge colorScheme="red" variant="solid" borderRadius="full">
+                                    <Badge
+                                        key={`unread-${unreadCount}`}
+                                        colorScheme="red"
+                                        variant="solid"
+                                        borderRadius="full"
+                                    >
                                         {unreadCount > 99 ? '99+' : unreadCount}
                                     </Badge>
                                 )}
                             </Flex>
                             <HStack spacing={2}>
-                                <Tooltip label="Refresh">
-                                    <IconButton
-                                        icon={<RepeatIcon />}
-                                        onClick={handleRefresh}
-                                        size="sm"
-                                        variant="ghost"
-                                        aria-label="Refresh notifications"
-                                    />
-                                </Tooltip>
+
                                 <ModalCloseButton position="static" />
                             </HStack>
                         </Flex>
@@ -216,7 +208,25 @@ const NotificationsModal = ({ isOpen, onClose }) => {
                         <Divider />
 
                         {/* Notifications list */}
-                        <Box p={4}>
+                        <Box p={4} position="relative">
+                            {/* Show loading indicator when refreshing */}
+                            {isLoading && notifications.length > 0 && (
+                                <Box
+                                    position="absolute"
+                                    top="2"
+                                    right="2"
+                                    zIndex={2}
+                                    bg="blue.500"
+                                    color="white"
+                                    px={3}
+                                    py={1}
+                                    borderRadius="full"
+                                    fontSize="sm"
+                                >
+                                    Refreshing...
+                                </Box>
+                            )}
+
                             {isLoading && notifications.length === 0 ? (
                                 <LoadingSkeleton />
                             ) : notifications.length === 0 ? (
