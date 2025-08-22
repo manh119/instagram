@@ -12,16 +12,38 @@ const useUserProfileStore = create((set, get) => ({
 	},
 	// this is used to update the number of posts in the profile page
 	addPost: (post) =>
-		set((state) => ({
-			userProfile: { ...state.userProfile, posts: [post.id, ...state.userProfile.posts] },
-		})),
+		set((state) => {
+			if (state.userProfile && state.userProfile.posts) {
+				return {
+					userProfile: { ...state.userProfile, posts: [post.id, ...state.userProfile.posts] },
+				};
+			}
+			return state;
+		}),
 	deletePost: (postId) =>
-		set((state) => ({
-			userProfile: {
-				...state.userProfile,
-				posts: state.userProfile.posts.filter((id) => id !== postId),
-			},
-		})),
+		set((state) => {
+			if (state.userProfile && state.userProfile.posts) {
+				return {
+					userProfile: {
+						...state.userProfile,
+						posts: state.userProfile.posts.filter((id) => id !== postId),
+					},
+				};
+			}
+			return state;
+		}),
+	decrementPostsCount: (postId) =>
+		set((state) => {
+			if (state.userProfile && state.userProfile.posts) {
+				return {
+					userProfile: {
+						...state.userProfile,
+						posts: state.userProfile.posts.filter((id) => id !== postId),
+					},
+				};
+			}
+			return state;
+		}),
 }));
 
 // Export a hook that uses shallow comparison to prevent unnecessary re-renders

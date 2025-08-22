@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import notificationService from '../services/notificationService';
 import webSocketService from '../services/websocketService';
-import useShowToast from './useShowToast';
+import useNotificationToast from './useNotificationToast.jsx';
 
 const useNotifications = () => {
     const [notifications, setNotifications] = useState([]);
@@ -12,7 +12,7 @@ const useNotifications = () => {
     const [page, setPage] = useState(1);
     const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
     const { user: authUser } = useAuth();
-    const showToast = useShowToast();
+    const { showNotificationToast, showToast } = useNotificationToast();
 
     const limit = 20;
 
@@ -128,10 +128,10 @@ const useNotifications = () => {
             });
         }
 
-        // Show toast for new notifications
+        // Show enhanced toast for new notifications
         if (!notification.isRead) {
-            console.log('Showing toast for notification');
-            showToast("New Notification", notification.message, "info");
+            console.log('Showing enhanced notification toast');
+            showNotificationToast(notification);
         }
 
         console.log('=== handleWebSocketNotification completed ===');

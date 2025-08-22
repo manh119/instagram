@@ -1,5 +1,4 @@
 import { Box, Avatar, Text, Flex, Button, VStack, HStack, Divider, useColorModeValue } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
 import useFollowUser from "../../hooks/useFollowUser";
 
 const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLeave }) => {
@@ -7,11 +6,24 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
     const profileId = profile?.id || 0; // Use 0 as fallback to ensure stable hook calls
     const { handleFollowUser, isFollowing, isUpdating } = useFollowUser(profileId);
 
-    // Color mode values
-    const bgColor = useColorModeValue('white', 'gray.800');
-    const borderColor = useColorModeValue('gray.200', 'gray.600');
+    // Color mode values - Completely solid backgrounds
+    const bgColor = useColorModeValue('white', 'black');
+    const borderColor = useColorModeValue('gray.400', 'gray.600');
     const textColor = useColorModeValue('gray.800', 'white');
-    const secondaryTextColor = useColorModeValue('gray.600', 'gray.400');
+    const secondaryTextColor = useColorModeValue('gray.600', 'gray.300');
+
+    // Hover effect colors
+    const hoverBorderColor = useColorModeValue('blue.500', 'blue.400');
+    const hoverAvatarBorderColor = useColorModeValue('blue.600', 'blue.300');
+    const hoverUsernameColor = useColorModeValue('blue.800', 'blue.200');
+    const hoverStatsBg = useColorModeValue('blue.200', 'blue.900');
+
+    // Stats background colors
+    const statsBgColor = useColorModeValue('gray.200', 'gray.900');
+
+    // Solid background colors with full opacity
+    const solidBgColor = useColorModeValue('rgba(255, 255, 255, 1)', 'rgba(0, 0, 0, 1)');
+    const borderColorLight = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)');
 
     // Don't render anything if not visible or no profile
     if (!isVisible || !profile) {
@@ -34,15 +46,25 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
             onMouseLeave={onMouseLeave}
             onMouseMove={onMouseEnter} // Keep preview visible while mouse is moving over it
         >
+            {/* Simple solid background like notification toast */}
             <Box
-                bg={bgColor}
+                bg={useColorModeValue('white', 'black')}
                 borderRadius="lg"
-                boxShadow="xl"
-                border={`1px solid ${borderColor}`}
+                boxShadow="lg"
+                border={`1px solid ${useColorModeValue('gray.200', 'gray.700')}`}
                 p={4}
                 minW="280px"
                 maxW="320px"
                 position="relative"
+                zIndex={1}
+                sx={{
+                    backgroundColor: useColorModeValue('white', 'black') + ' !important'
+                }}
+                _hover={{
+                    boxShadow: 'xl',
+                    borderColor: useColorModeValue('gray.300', 'gray.600')
+                }}
+                transition="all 0.3s ease-in-out"
             >
                 {/* Arrow indicator */}
                 <Box
@@ -63,13 +85,21 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
                 {/* Profile header */}
                 <Flex gap={3} mb={4}>
                     <Avatar
+                        className="profile-avatar"
                         src={profile.profilePicURL}
                         size="lg"
                         name={profile.username}
                         border={`2px solid ${borderColor}`}
+                        transition="all 0.3s ease-in-out"
                     />
                     <VStack align="start" spacing={1} flex={1}>
-                        <Text fontWeight="bold" fontSize="lg" color={textColor}>
+                        <Text
+                            className="profile-username"
+                            fontWeight="bold"
+                            fontSize="lg"
+                            color={textColor}
+                            transition="color 0.3s ease-in-out"
+                        >
                             {profile.username}
                         </Text>
                         <Text fontSize="sm" color={secondaryTextColor} noOfLines={2}>
@@ -84,7 +114,14 @@ const ProfilePreview = ({ profile, isVisible, position, onMouseEnter, onMouseLea
                 </Flex>
 
                 {/* Stats */}
-                <HStack justify="space-around" mb={4} p={3} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="md">
+                <HStack
+                    justify="space-around"
+                    mb={4}
+                    p={3}
+                    bg={useColorModeValue('gray.50', 'gray.800')}
+                    borderRadius="md"
+                    transition="all 0.2s ease-in-out"
+                >
                     <VStack spacing={0}>
                         <Text fontWeight="bold" fontSize="lg" color={textColor}>
                             {profile.postsCount || 0}

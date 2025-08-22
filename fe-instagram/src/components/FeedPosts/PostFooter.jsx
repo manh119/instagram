@@ -59,9 +59,11 @@ const PostFooter = ({ post, creatorProfile }) => {
 	const commentCount = post.comments?.length || 0;
 
 	return (
+
+
 		<Box>
-			{/* Like and Comment Actions */}
-			<HStack spacing={4} mb={3}>
+			{/* Hàng icon */}
+			<HStack spacing={4} mb={1} px={2}>
 				<Tooltip label={isLiked ? "Unlike" : "Like"} placement="top">
 					<IconButton
 						icon={isLiked ? <UnlikeLogo /> : <NotificationsLogo />}
@@ -69,16 +71,14 @@ const PostFooter = ({ post, creatorProfile }) => {
 						isLoading={isUpdating}
 						colorScheme={isLiked ? "red" : "gray"}
 						variant="ghost"
-						size="lg"
-						_hover={{
-							bg: bgHover,
-							transform: "scale(1.1)",
-						}}
-						_active={{
-							transform: "scale(0.95)",
-						}}
-						transition="all 0.2s"
+						// ↓ bỏ padding & kích thước tối thiểu để không thụt vào
+						p={0}
+						minW="auto"
+						h="auto"
 						aria-label={isLiked ? "Unlike post" : "Like post"}
+						_hover={{ bg: bgHover, transform: "scale(1.1)" }}
+						_active={{ transform: "scale(0.95)" }}
+						transition="all 0.2s"
 					/>
 				</Tooltip>
 
@@ -87,24 +87,22 @@ const PostFooter = ({ post, creatorProfile }) => {
 						icon={<CommentLogo />}
 						onClick={onOpen}
 						variant="ghost"
-						size="lg"
-						_hover={{
-							bg: bgHover,
-							transform: "scale(1.1)",
-						}}
-						_active={{
-							transform: "scale(0.95)",
-						}}
-						transition="all 0.2s"
+						p={0}
+						minW="auto"
+						h="auto"
 						aria-label="View comments"
+						_hover={{ bg: bgHover, transform: "scale(1.1)" }}
+						_active={{ transform: "scale(0.95)" }}
+						transition="all 0.2s"
 					/>
 				</Tooltip>
 			</HStack>
 
-			{/* Like Count - Clickable to show who liked */}
+			{/* Like Count */}
 			{likeCount > 0 && (
-				<ScaleFade in={true} initialScale={0.8}>
+				<ScaleFade in initialScale={0.8}>
 					<Text
+						px={2}            // ← canh thẳng với hàng icon
 						fontWeight="semibold"
 						fontSize="sm"
 						mb={2}
@@ -120,8 +118,8 @@ const PostFooter = ({ post, creatorProfile }) => {
 
 			{/* Caption */}
 			{post.caption && (
-				<SlideFade in={true} offsetY="20px">
-					<Text fontSize="sm" mb={3} lineHeight="1.4">
+				<SlideFade in offsetY="20px">
+					<Text px={2} fontSize="sm" mb={3} lineHeight="1.4">
 						<Text as="span" fontWeight="semibold" mr={2}>
 							{creatorProfile?.username || post.createdBy?.username}
 						</Text>
@@ -130,44 +128,23 @@ const PostFooter = ({ post, creatorProfile }) => {
 				</SlideFade>
 			)}
 
-			{/* Comments Preview */}
-			{commentCount > 0 && (
-				<SlideFade in={true} offsetY="20px">
-					<VStack align="stretch" spacing={2} mb={3}>
-						{/* Show first 2 comments */}
-						{post.comments.slice(0, 1).map((comment) => (
-							<Text key={comment.id} fontSize="sm" lineHeight="1.4">
-								<Text as="span" fontWeight="semibold" mr={2}>
-									{comment.createdBy?.username || "Unknown User"}
-								</Text>
-								{comment.content || comment.comment || "Comment text not available"}
-							</Text>
-						))}
-
-						{/* View All Comments Button */}
-						{commentCount > 2 && (
-							<Button
-								variant="ghost"
-
-								size="sm"
-								color="gray.500"
-								onClick={onOpen}
-								_hover={{
-									color: "blue.500",
-									bg: "blue.50"
-								}}
-								transition="all 0.2s"
-
-							>
-								View all {commentCount} comments
-							</Button>
-						)}
-					</VStack>
-				</SlideFade>
+			{commentCount > 2 && (
+				<Text
+					as="button"
+					onClick={onOpen}
+					fontSize="sm"
+					color="gray.500"
+					px={2}
+					textAlign="left"
+					_hover={{ color: "blue.500" }}
+				>
+					View all {commentCount} comments
+				</Text>
 			)}
 
+
 			{/* Comment Input */}
-			<SlideFade in={true} offsetY="20px">
+			<SlideFade in offsetY="20px">
 				<Flex gap={2} mt={3}>
 					<Input
 						ref={commentRef}
@@ -185,18 +162,13 @@ const PostFooter = ({ post, creatorProfile }) => {
 						_placeholder={{ color: "gray.500" }}
 						transition="all 0.2s"
 					/>
-
 				</Flex>
 			</SlideFade>
 
-			{/* Comments Modal */}
-			<CommentsModal
-				isOpen={isOpen}
-				onClose={onClose}
-				post={post}
-				creatorProfile={creatorProfile}
-			/>
+			<CommentsModal isOpen={isOpen} onClose={onClose} post={post} creatorProfile={creatorProfile} />
 		</Box>
+
+
 	);
 };
 

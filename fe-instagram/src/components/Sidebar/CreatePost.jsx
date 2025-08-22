@@ -68,7 +68,7 @@ const CreatePost = () => {
 			await handleCreatePost(selectedFile, selectedVideo, caption);
 			onClose();
 			setCaption("");
-			setSelectedFile(null);
+			clearFile(); // This clears both selectedFile and previewUrl
 			setSelectedVideo(null);
 			setVideoPreview(null);
 		} catch (error) {
@@ -121,9 +121,7 @@ const CreatePost = () => {
 							mb={4}
 						/>
 
-						<Text mb={3} fontSize="sm" color="gray.400">
-							Add media to your post:
-						</Text>
+
 
 						<HStack spacing={4} mb={4}>
 							<Input type='file' hidden ref={imageRef} onChange={handleImageChange} accept="image/*" />
@@ -138,14 +136,7 @@ const CreatePost = () => {
 								size="lg"
 							/>
 
-							<IconButton
-								icon={<BsFillCameraVideoFill />}
-								onClick={() => videoRef.current.click()}
-								aria-label="Add video"
-								colorScheme="red"
-								variant="outline"
-								size="lg"
-							/>
+
 						</HStack>
 
 						{/* Image Preview */}

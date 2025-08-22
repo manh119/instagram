@@ -104,29 +104,19 @@ const PostDetailPage = () => {
     return (
         <Container maxW="container.md" py={4}>
             <VStack spacing={4} align="stretch">
-
-
                 {/* Post content - like feed but single post */}
                 <Box
                     bg={bgColor}
                     border="1px solid"
                     borderColor={borderColor}
                     borderRadius="lg"
-                    overflow="hidden"
-                    maxH="85vh"
+                    overflow="auto"
+                    maxH="100vh"
                 >
                     <FeedPost post={post} isDetailPage={true} />
                 </Box>
-
-
             </VStack>
 
-            {/* Comments Modal */}
-            <CommentsModal
-                isOpen={isCommentsModalOpen}
-                onClose={() => setIsCommentsModalOpen(false)}
-                post={post}
-            />
         </Container>
     );
 };
