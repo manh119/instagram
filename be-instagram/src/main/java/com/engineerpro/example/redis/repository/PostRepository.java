@@ -54,4 +54,13 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
   // Custom query to fetch posts with Profile data by profile IDs for feed
   @Query("SELECT p FROM Post p JOIN FETCH p.createdBy WHERE p.createdBy.id IN :profileIds ORDER BY p.createdAt DESC")
   List<Post> findByCreatedByProfileIdsWithProfile(@Param("profileIds") List<Integer> profileIds);
+
+  // Custom query to fetch posts liked by a user with all relationships
+  @Query("SELECT DISTINCT p FROM Post p " +
+         "JOIN FETCH p.createdBy " +
+         "LEFT JOIN FETCH p.comments " +
+         "LEFT JOIN FETCH p.userLikes " +
+         "WHERE :profileId IN (SELECT ul.id FROM p.userLikes ul) " +
+         "ORDER BY p.createdAt DESC")
+  List<Post> findByUserLikesIdWithAllRelationships(@Param("profileId") int profileId);
 }

@@ -253,6 +253,26 @@ class PostService {
         }
     }
 
+    // Get posts liked by a user
+    async getLikedPosts(userId) {
+        try {
+            const response = await fetch(`${this.baseURL}/posts/liked/${userId}`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error getting liked posts:', error);
+            throw error;
+        }
+    }
+
     // Like a post
     async likePost(postId) {
         try {
@@ -500,6 +520,27 @@ class PostService {
             }
         } catch (error) {
             console.error('Error unfollowing user:', error);
+            throw error;
+        }
+    }
+
+    // Get a specific post by ID
+    async getPostById(postId) {
+        try {
+            const headers = this.getAuthHeaders();
+            const response = await fetch(`${this.baseURL}/posts/${postId}`, {
+                method: 'GET',
+                headers: headers
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching post:', error);
             throw error;
         }
     }

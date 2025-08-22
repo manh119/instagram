@@ -223,4 +223,20 @@ public class PostController {
       throw e;
     }
   }
+
+  @GetMapping("/liked/{userId}")
+  public ResponseEntity<GetUserPostResponse> getLikedPosts(@PathVariable int userId) {
+    LoggingUtil.logControllerEntry(logger, "getLikedPosts", "userId", userId);
+    
+    try {
+      List<Post> likedPosts = postService.getLikedPosts(userId);
+      GetUserPostResponse response = GetUserPostResponse.builder().posts(likedPosts).build();
+      
+      LoggingUtil.logControllerExit(logger, "getLikedPosts", "Liked posts count: " + likedPosts.size());
+      return ResponseEntity.ok().body(response);
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getLikedPosts", e);
+      throw e;
+    }
+  }
 }

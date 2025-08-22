@@ -20,4 +20,6 @@ public interface PostService {
   Post unlikePost(UserPrincipal userPrincipal, int postId);
 
   List<Post> getUserPosts(int userId);
+
+  List<Post> getLikedPosts(int userId);
 }

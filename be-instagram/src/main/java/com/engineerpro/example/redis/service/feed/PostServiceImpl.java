@@ -290,6 +290,23 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  public List<Post> getLikedPosts(int userId) {
+    LoggingUtil.logServiceDebug(logger, "Retrieving liked posts", "User ID", userId);
+    
+    try {
+      Profile profile = profileService.getUserProfile(userId);
+      // Get posts that the user has liked
+      List<Post> likedPosts = postRepository.findByUserLikesIdWithAllRelationships(profile.getId());
+      
+      LoggingUtil.logServiceDebug(logger, "Liked posts retrieved successfully", "User ID", userId, "Liked Posts Count", likedPosts.size());
+      return likedPosts;
+    } catch (Exception e) {
+      LoggingUtil.logServiceWarning(logger, "Failed to retrieve liked posts", "User ID", userId, "Error", e.getMessage());
+      throw e;
+    }
+  }
+
+  @Override
   public Post getPostWithAllRelationships(int postId) {
     LoggingUtil.logServiceDebug(logger, "Retrieving post with all relationships", "Post ID", postId);
     

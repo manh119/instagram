@@ -1,40 +1,24 @@
 import React, { useState } from "react";
 import {
-	Modal,
-	ModalOverlay,
-	ModalContent,
-	ModalHeader,
-	ModalFooter,
-	ModalBody,
-	ModalCloseButton,
-	useDisclosure,
 	GridItem,
 	Image,
 	Text,
 	Button,
 	Box,
-	IconButton,
-	Avatar,
-	Divider,
 	Flex,
-	Grid,
-	VStack,
-	HStack
 } from "@chakra-ui/react";
-import { DeleteIcon } from "@chakra-ui/icons";
 import { AiFillHeart } from "react-icons/ai";
 import { FaComment } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import ResponsiveVideoContainer from "../Common/ResponsiveVideoContainer";
-import Comment from "../Comment/Comment";
-import PostFooter from "../FeedPosts/PostFooter";
 import useUserProfileStore from "../../store/userProfileStore";
 import { useAuth } from "../../contexts/AuthContext";
 import useShowToast from "../../hooks/useShowToast";
 import usePostStore from "../../store/postStore";
-import Caption from "../Comment/Caption";
 import postService from "../../services/postService";
 import ConfirmDialog from "../Common/ConfirmDialog";
+import CommentsModal from "../Modals/CommentsModal";
+import { useDisclosure } from "@chakra-ui/react";
 
 const ProfilePost = ({ post }) => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -44,7 +28,7 @@ const ProfilePost = ({ post }) => {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const deletePost = usePostStore((state) => state.deletePost);
-	const decrementPostsCount = useUserProfileStore((state) => state.deletePost);
+	const decrementPostsCount = useUserProfileStore((state) => state.decrementPostsCount);
 
 	// Debug logging to see post data
 	console.log('ProfilePost - post data:', post);
@@ -54,7 +38,6 @@ const ProfilePost = ({ post }) => {
 	// Safely get likes and comments with fallbacks
 	const likesCount = post?.userLikes?.length || post?.likes?.length || 0;
 	const commentsCount = post?.comments?.length || 0;
-	const hasComments = Array.isArray(post?.comments) && post.comments.length > 0;
 
 	// Check if current user can delete this post
 	const canDeletePost = authUser && (
@@ -120,67 +103,44 @@ const ProfilePost = ({ post }) => {
 		return null;
 	}
 
-	const renderMedia = (isGrid = false) => {
+	const renderMedia = () => {
 		if (post.videoUrl) {
-			if (isGrid) {
-				// For grid view, show a video thumbnail with play icon and auto-play
-				return (
-					<ResponsiveVideoContainer variant="grid">
-						<video
-							src={post.videoUrl}
-							muted
-							loop
-							preload="metadata"
-							style={{
-								width: "100%",
-								height: "100%",
-								objectFit: "cover",
-								aspectRatio: "9/16"
-							}}
-							onMouseEnter={(e) => {
-								// Auto-play on hover for grid view
-								e.target.play().catch(() => {
-									// Auto-play might fail due to browser policies
-									console.log('Grid video hover play failed');
-								});
-							}}
-							onMouseLeave={(e) => {
-								// Pause when not hovering
-								e.target.pause();
-							}}
-						/>
-						<Box
-							className="play-button-overlay"
-							position="absolute"
-							top="50%"
-							left="50%"
-							transform="translate(-50%, -50%)"
-						>
-							<Box className="play-icon" />
-						</Box>
-					</ResponsiveVideoContainer>
-				);
-			} else {
-				// For modal view, show video with controls and auto-play
-				return (
-					<ResponsiveVideoContainer variant="modal">
-						<video
-							src={post.videoUrl}
-							controls
-							muted
-							loop
-							autoPlay
-							preload="metadata"
-							style={{
-								maxHeight: "100%",
-								maxWidth: "100%",
-								objectFit: "cover",
-								aspectRatio: "9/16"
-							}}
-						/>
-					</ResponsiveVideoContainer>
-				);
-			}
+			return (
+				<ResponsiveVideoContainer variant="grid">
+					<video
+						src={post.videoUrl}
+						muted
+						loop
+						preload="metadata"
+						style={{
+							width: "100%",
+							height: "100%",
+							objectFit: "cover",
+							aspectRatio: "9/16"
+						}}
+						onMouseEnter={(e) => {
+							// Auto-play on hover for grid view
+							e.target.play().catch(() => {
+								// Auto-play might fail due to browser policies
+								console.log('Grid video hover play failed');
+							});
+						}}
+						onMouseLeave={(e) => {
+							// Pause when not hovering
+							e.target.pause();
+						}}
+					/>
+					<Box
+						className="play-button-overlay"
+						position="absolute"
+						top="50%"
+						left="50%"
+						transform="translate(-50%, -50%)"
+					>
+						<Box className="play-icon" />
+					</Box>
+				</ResponsiveVideoContainer>
+			);
 		} else if (post.imageUrl) {
 			return (
 				<Image
@@ -188,7 +148,7 @@ const ProfilePost = ({ post }) => {
 					alt='profile post'
 					w={"100%"}
 					h={"100%"}
-					objectFit={isGrid ? "cover" : "contain"}
+					objectFit="cover"
 				/>
 			);
 		}
@@ -265,74 +225,15 @@ const ProfilePost = ({ post }) => {
 					</Flex>
 				</Flex>
 
-				{renderMedia(true)}
+				{renderMedia()}
 			</GridItem>
 
-			<Modal isOpen={isOpen} onClose={onClose} isCentered={true} size={{ base: "3xl", md: "5xl" }}>
-				<ModalOverlay />
-				<ModalContent>
-					<ModalCloseButton />
-					<ModalBody bg={"black"} pb={5}>
-						<Flex
-							gap='4'
-							w={{ base: "90%", sm: "70%", md: "full" }}
-							mx={"auto"}
-							maxH={"90vh"}
-							minH={"50vh"}
-						>
-							<Flex
-								borderRadius={4}
-								overflow={"hidden"}
-								border={"1px solid"}
-								borderColor={"whiteAlpha.300"}
-								flex={1.5}
-								justifyContent={"center"}
-								alignItems={"center"}
-							>
-								{renderMedia(false)}
-							</Flex>
-							<Flex flex={1} flexDir={"column"} px={10} display={{ base: "none", md: "flex" }}>
-								<Flex alignItems={"center"} justifyContent={"space-between"}>
-									<Flex alignItems={"center"} gap={4}>
-										<Avatar src={userProfile?.profilePicURL} size={"sm"} name={userProfile?.username || 'User'} />
-										<Text fontWeight={"bold"} fontSize={12}>
-											{userProfile?.username || 'Unknown User'}
-										</Text>
-									</Flex>
-
-									{canDeletePost && (
-										<Button
-											size={"sm"}
-											bg={"transparent"}
-											_hover={{ bg: "whiteAlpha.300", color: "red.600" }}
-											borderRadius={4}
-											p={1}
-											onClick={handleDeleteClick}
-											isLoading={isDeleting}
-											title="Delete post"
-										>
-											<MdDelete size={20} cursor='pointer' />
-										</Button>
-									)}
-								</Flex>
-								<Divider my={4} bg={"gray.500"} />
-
-								<VStack w='full' alignItems={"start"} maxH={"350px"} overflowY={"auto"}>
-									{/* CAPTION */}
-									{post.caption && <Caption post={post} />}
-									{/* COMMENTS */}
-									{hasComments && post.comments.map((comment) => (
-										<Comment key={comment.id} comment={comment} />
-									))}
-								</VStack>
-								<Divider my={4} bg={"gray.8000"} />
-
-								<PostFooter isProfilePage={true} post={post} />
-							</Flex>
-						</Flex>
-					</ModalBody>
-				</ModalContent>
-			</Modal>
+			<CommentsModal
+				isOpen={isOpen}
+				onClose={onClose}
+				post={post}
+				creatorProfile={userProfile}
+			/>
 
 			{/* Delete confirmation dialog */}
 			<ConfirmDialog

@@ -84,6 +84,12 @@ const ProfileHeader = ({ profile }) => {
 						</Text>
 						Following
 					</Text>
+					<Text fontSize={{ base: "xs", md: "sm" }}>
+						<Text as='span' fontWeight={"bold"} mr={1}>
+							{userProfile.likesCount || 0}
+						</Text>
+						Likes
+					</Text>
 				</Flex>
 				<Flex alignItems={"center"} gap={4}>
 					<Text fontSize={"sm"} fontWeight={"bold"}>
