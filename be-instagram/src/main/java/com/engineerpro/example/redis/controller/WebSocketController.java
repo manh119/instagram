@@ -28,6 +28,11 @@ public class WebSocketController {
     @SendToUser("/queue/auth-response")
     public AuthResponse authenticate(AuthRequest request, SimpMessageHeaderAccessor headerAccessor) {
         try {
+            logger.info("=== WebSocket AUTH Request Received ===");
+            logger.info("Request: {}", request);
+            logger.info("Session ID: {}", headerAccessor.getSessionId());
+            logger.info("User ID from request: {}", request.getUserId());
+            
             // Extract user ID from the request
             Long userId = request.getUserId();
             
@@ -35,15 +40,23 @@ public class WebSocketController {
                 // Store user ID in session attributes for future use
                 headerAccessor.getSessionAttributes().put("userId", userId);
                 
+                logger.info("=== WebSocket AUTH Success ===");
+                logger.info("User ID stored in session: {}", userId);
+                logger.info("Session attributes: {}", headerAccessor.getSessionAttributes());
+                
                 LoggingUtil.logBusinessEvent(logger, "WebSocket user authenticated", 
                     "UserId", userId, "SessionId", headerAccessor.getSessionId());
                 
                 return new AuthResponse(true, "Authentication successful");
             } else {
+                logger.warn("=== WebSocket AUTH Failed ===");
+                logger.warn("Invalid user ID: {}", request.getUserId());
                 return new AuthResponse(false, "Invalid user ID");
             }
             
         } catch (Exception e) {
+            logger.error("=== WebSocket AUTH Exception ===");
+            logger.error("Error during authentication: {}", e.getMessage(), e);
             LoggingUtil.logServiceWarning(logger, "WebSocket authentication failed", 
                 "Error", e.getMessage());
             return new AuthResponse(false, "Authentication failed");

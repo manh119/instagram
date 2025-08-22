@@ -40,10 +40,12 @@ public class ImageController {
                 "extension", fileExtension);
             
             // Get object from MinIO
+            // Images are stored in the 'posts/' subfolder
+            String objectKey = "posts/" + filename;
             InputStream stream = minioClient.getObject(
                 GetObjectArgs.builder()
                     .bucket("spring-boot")
-                    .object(filename)
+                    .object(objectKey)
                     .build()
             );
 

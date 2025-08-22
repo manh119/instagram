@@ -35,7 +35,7 @@ const CreatePost = () => {
 	const [caption, setCaption] = useState("");
 	const imageRef = useRef(null);
 	const videoRef = useRef(null);
-	const { handleImageChange, selectedFile, setSelectedFile } = usePreviewImg();
+	const { handleImageChange, selectedFile, previewUrl, setSelectedFile, clearFile } = usePreviewImg();
 	const [selectedVideo, setSelectedVideo] = useState(null);
 	const [videoPreview, setVideoPreview] = useState(null);
 	const showToast = useShowToast();
@@ -77,7 +77,7 @@ const CreatePost = () => {
 	};
 
 	const clearMedia = () => {
-		setSelectedFile(null);
+		clearFile();
 		setSelectedVideo(null);
 		setVideoPreview(null);
 	};
@@ -149,14 +149,14 @@ const CreatePost = () => {
 						</HStack>
 
 						{/* Image Preview */}
-						{selectedFile && (
+						{previewUrl && (
 							<Flex mt={5} w={"full"} position={"relative"} justifyContent={"center"}>
-								<Image src={selectedFile} alt='Selected image' maxH="300px" objectFit="contain" />
+								<Image src={previewUrl} alt='Selected image' maxH="300px" objectFit="contain" />
 								<CloseButton
 									position={"absolute"}
 									top={2}
 									right={2}
-									onClick={() => setSelectedFile(null)}
+									onClick={() => clearFile()}
 								/>
 							</Flex>
 						)}

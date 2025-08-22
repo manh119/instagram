@@ -1,3 +1,5 @@
+import presignedUrlService from './presignedUrlService.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 class PostService {
@@ -69,44 +71,125 @@ class PostService {
         });
     }
 
-    // Create a new post
+    // Upload image using pre-signed URL
+    async uploadImageUsingPresignedUrl(file) {
+        try {
+            console.log('=== Uploading Image Using Pre-signed URL ===');
+            console.log('File:', file.name, file.size, file.type);
+
+            const result = await presignedUrlService.uploadPostImage(file, (progress) => {
+                console.log('Image upload progress:', progress + '%');
+            });
+
+            console.log('=== Image Upload Complete ===');
+            console.log('Result:', result);
+
+            // Return the full URL to the uploaded image
+            // Extract just the filename from the object key (remove 'posts/' prefix)
+            const filename = result.objectKey.split('/').pop();
+            return `${this.baseURL}/images/${filename}`;
+
+        } catch (error) {
+            console.error('=== Image Upload Failed ===');
+            console.error('Error:', error);
+            throw new Error(`Failed to upload image: ${error.message}`);
+        }
+    }
+
+    // Upload video using pre-signed URL
+    async uploadVideoUsingPresignedUrl(file) {
+        try {
+            console.log('=== Uploading Video Using Pre-signed URL ===');
+            console.log('File:', file.name, file.size, file.type);
+
+            // Note: Using uploadPostImage for videos since both images and videos go to the same posts bucket
+            const result = await presignedUrlService.uploadPostImage(file, (progress) => {
+                console.log('Video upload progress:', progress + '%');
+            });
+
+            console.log('=== Video Upload Complete ===');
+            console.log('Result:', result);
+
+            // Return the full URL to the uploaded video
+            // Extract just the filename from the object key (remove 'posts/' prefix)
+            const filename = result.objectKey.split('/').pop();
+            return `${this.baseURL}/images/${filename}`;
+
+        } catch (error) {
+            console.error('=== Video Upload Failed ===');
+            console.error('Error:', error);
+            throw new Error(`Failed to upload video: ${error.message}`);
+        }
+    }
+
+    // Create a new post using pre-signed URLs
     async createPost(postData) {
         try {
-            let base64Image = null;
-            let base64Video = null;
+            console.log('=== Starting Post Creation with Pre-signed URLs ===');
+            console.log('=== DEBUG: postData received ===');
+            console.log('postData:', postData);
+            console.log('postData.image:', postData.image);
+            console.log('postData.image type:', typeof postData.image);
+            console.log('postData.image instanceof File:', postData.image instanceof File);
+            console.log('postData.video:', postData.video);
+            console.log('postData.video type:', typeof postData.video);
+            console.log('postData.video instanceof File:', postData.video instanceof File);
 
-            // Convert image to base64 if it's a file
+            let imageUrl = null;
+            let videoUrl = null;
+
+            // Handle image upload using pre-signed URL
+            console.log('=== DEBUG: Processing image ===');
+            console.log('postData.image exists:', !!postData.image);
+            console.log('postData.image instanceof File:', postData.image instanceof File);
+            console.log('postData.image type:', typeof postData.image);
+
             if (postData.image && postData.image instanceof File) {
-                base64Image = await this.imageToBase64(postData.image);
-                console.log('Image converted to base64, length:', base64Image.length);
-            } else if (postData.image) {
-                base64Image = postData.image;
+                console.log('Processing image file:', postData.image.name, postData.image.size);
+                imageUrl = await this.uploadImageUsingPresignedUrl(postData.image);
+                console.log('Image uploaded successfully, URL:', imageUrl);
+            } else if (postData.image && typeof postData.image === 'string' && !postData.image.startsWith('data:')) {
+                imageUrl = postData.image;
+                console.log('Using existing image URL:', imageUrl);
+            } else {
+                console.log('Image not processed - conditions not met');
             }
 
-            // Convert video to base64 if it's a file
+            // Handle video upload using pre-signed URL
+            console.log('=== DEBUG: Processing video ===');
+            console.log('postData.video exists:', !!postData.video);
+            console.log('postData.video instanceof File:', postData.video instanceof File);
+            console.log('postData.video type:', typeof postData.video);
+
             if (postData.video && postData.video instanceof File) {
-                base64Video = await this.videoToBase64(postData.video);
-                console.log('Video converted to base64, length:', base64Video.length);
-            } else if (postData.video) {
-                base64Video = postData.video;
+                console.log('Processing video file:', postData.video.name, postData.video.size);
+                videoUrl = await this.uploadVideoUsingPresignedUrl(postData.video);
+                console.log('Video uploaded successfully, URL:', videoUrl);
+            } else if (postData.video && typeof postData.video === 'string' && !postData.video.startsWith('data:')) {
+                videoUrl = postData.video;
+                console.log('Using existing video URL:', videoUrl);
+            } else {
+                console.log('Video not processed - conditions not met');
             }
 
             const requestBody = {
                 caption: postData.caption
             };
 
-            // Only add media fields if they exist
-            if (base64Image) {
-                requestBody.base64ImageString = base64Image;
+            // Add media URLs if they exist
+            if (imageUrl) {
+                requestBody.imageUrl = imageUrl;
             }
-            if (base64Video) {
-                requestBody.base64VideoString = base64Video;
+            if (videoUrl) {
+                requestBody.videoUrl = videoUrl;
             }
 
-            console.log('Sending post request:', {
+            console.log('Sending post request with URLs:', {
                 caption: requestBody.caption,
-                hasImage: !!base64Image,
-                hasVideo: !!base64Video
+                hasImage: !!imageUrl,
+                hasVideo: !!videoUrl,
+                imageUrl: imageUrl,
+                videoUrl: videoUrl
             });
 
             const response = await fetch(`${this.baseURL}/posts`, {
@@ -121,7 +204,8 @@ class PostService {
             }
 
             const result = await response.json();
-            console.log('Post created successfully:', result);
+            console.log('=== Post Created Successfully ===');
+            console.log('Post result:', result);
             return result;
         } catch (error) {
             console.error('Error creating post:', error);

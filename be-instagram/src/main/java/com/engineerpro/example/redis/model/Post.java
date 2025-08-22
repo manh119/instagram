@@ -41,9 +41,16 @@ public class Post {
   @JsonProperty("createdBy")
   private Profile createdBy;
 
+  @Column(name = "image_url", length = 1000)
   private String imageUrl;
+  
+  @Column(name = "video_url", length = 1000)
   private String videoUrl;
+  
+  @Column(name = "caption", length = 2000)
   private String caption;
+  
+  @Column(name = "created_at")
   private Date createdAt;
 
   @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

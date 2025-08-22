@@ -32,9 +32,16 @@ public class Profile {
   @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "authorities", "password"})
   private User user;
   
+  @Column(name = "profile_image_url", length = 1000)
   private String profileImageUrl;
+  
+  @Column(name = "display_name", length = 255)
   private String displayName;
+  
+  @Column(name = "username", length = 255, unique = true)
   private String username;
+  
+  @Column(name = "bio", length = 1000)
   private String bio;
 
   // Getter for user ID to maintain frontend compatibility

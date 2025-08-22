@@ -1,6 +1,7 @@
 package com.engineerpro.example.redis.controller.feed;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,10 @@ import com.engineerpro.example.redis.dto.feed.CreatePostResponse;
 import com.engineerpro.example.redis.dto.feed.DeletePostResponse;
 import com.engineerpro.example.redis.dto.feed.GetPostResponse;
 import com.engineerpro.example.redis.dto.feed.GetUserPostResponse;
+import com.engineerpro.example.redis.dto.feed.PostUploadUrlRequest;
 import com.engineerpro.example.redis.model.Post;
 import com.engineerpro.example.redis.service.feed.PostService;
+import com.engineerpro.example.redis.service.PreSignedUrlService;
 import com.engineerpro.example.redis.util.LoggingUtil;
 
 import jakarta.validation.Valid;
@@ -34,7 +37,45 @@ public class PostController {
   
   @Autowired
   private PostService postService;
+  
+  @Autowired
+  private PreSignedUrlService preSignedUrlService;
 
+  /**
+   * Get pre-signed URL for post image upload
+   */
+  @PostMapping("/upload-url")
+  public ResponseEntity<?> getPostUploadUrl(
+      @RequestBody PostUploadUrlRequest request,
+      Authentication authentication) {
+    
+    try {
+      LoggingUtil.logControllerEntry(logger, "getPostUploadUrl", "request", request);
+      
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      
+      // Validate request
+      if (request.getFileName() == null || request.getFileName().trim().isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("error", "File name is required"));
+      }
+      
+      if (request.getContentType() == null || request.getContentType().trim().isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Content type is required"));
+      }
+      
+      // Generate pre-signed URL
+      PreSignedUrlService.PreSignedUrlResponse response = 
+        preSignedUrlService.generateImageUploadUrl(request.getFileName(), request.getContentType());
+      
+      LoggingUtil.logControllerExit(logger, "getPostUploadUrl", response);
+      return ResponseEntity.ok(response);
+      
+    } catch (Exception e) {
+      LoggingUtil.logControllerError(logger, "getPostUploadUrl", e);
+      return ResponseEntity.internalServerError().body(Map.of("error", "Failed to generate upload URL"));
+    }
+  }
+  
   @PostMapping()
   public ResponseEntity<CreatePostResponse> createPost(
       @Valid @RequestBody CreatePostRequest request, Authentication authentication) {

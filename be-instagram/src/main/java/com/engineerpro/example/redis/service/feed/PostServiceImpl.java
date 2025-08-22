@@ -78,13 +78,30 @@ public class PostServiceImpl implements PostService {
         LoggingUtil.logServiceDebug(logger, "Processing image upload", 
             "Username", userPrincipal.getUsername(), 
             "Image length", request.getImageLength());
-        String imageUrl = uploadService.uploadImage(request.getBase64ImageString());
+        
+        String imageUrl = null;
+        
+        // Check if using pre-signed URL (new method)
+        if (request.hasImageUrl()) {
+          LoggingUtil.logServiceDebug(logger, "Using pre-signed URL for image", 
+              "Username", userPrincipal.getUsername(), 
+              "Image URL", request.getImageUrl());
+          imageUrl = request.getImageUrl();
+        }
+        // Check if using base64 (legacy method)
+        else if (request.hasBase64Image()) {
+          LoggingUtil.logServiceDebug(logger, "Using base64 for image upload", 
+              "Username", userPrincipal.getUsername(), 
+              "Image length", request.getImageLength());
+          imageUrl = uploadService.uploadImage(request.getBase64ImageString());
+        }
+        
         if (imageUrl != null) {
-          LoggingUtil.logServiceDebug(logger, "Image uploaded successfully", "Image URL", imageUrl);
+          LoggingUtil.logServiceDebug(logger, "Image processed successfully", "Image URL", imageUrl);
           post.setImageUrl(imageUrl);
         } else {
-          LoggingUtil.logServiceWarning(logger, "Image upload failed", "Username", userPrincipal.getUsername());
-          throw new RuntimeException("Failed to upload image");
+          LoggingUtil.logServiceWarning(logger, "Image processing failed", "Username", userPrincipal.getUsername());
+          throw new RuntimeException("Failed to process image");
         }
       } else {
         LoggingUtil.logServiceDebug(logger, "No image provided for post", "Username", userPrincipal.getUsername());
@@ -97,17 +114,33 @@ public class PostServiceImpl implements PostService {
             "Video length", request.getVideoLength(),
             "Video format", request.getVideoFormat());
         
-        String videoUrl = uploadService.uploadVideo(request.getBase64VideoString());
+        String videoUrl = null;
+        
+        // Check if using pre-signed URL (new method)
+        if (request.hasVideoUrl()) {
+          LoggingUtil.logServiceDebug(logger, "Using pre-signed URL for video", 
+              "Username", userPrincipal.getUsername(), 
+              "Video URL", request.getVideoUrl());
+          videoUrl = request.getVideoUrl();
+        }
+        // Check if using base64 (legacy method)
+        else if (request.hasBase64Video()) {
+          LoggingUtil.logServiceDebug(logger, "Using base64 for video upload", 
+              "Username", userPrincipal.getUsername(), 
+              "Video length", request.getVideoLength());
+          videoUrl = uploadService.uploadVideo(request.getBase64VideoString());
+        }
+        
         if (videoUrl != null) {
-          LoggingUtil.logServiceDebug(logger, "Video uploaded successfully", 
+          LoggingUtil.logServiceDebug(logger, "Video processed successfully", 
               "Video URL", videoUrl, 
               "Format", request.getVideoFormat());
           post.setVideoUrl(videoUrl);
         } else {
-          LoggingUtil.logServiceWarning(logger, "Video upload failed", 
+          LoggingUtil.logServiceWarning(logger, "Video processing failed", 
               "Username", userPrincipal.getUsername(), 
               "Format", request.getVideoFormat());
-          throw new RuntimeException("Failed to upload video");
+          throw new RuntimeException("Failed to process video");
         }
       } else {
         LoggingUtil.logServiceDebug(logger, "No video provided for post", "Username", userPrincipal.getUsername());
