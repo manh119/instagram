@@ -2,6 +2,7 @@ import { Container, Flex, Link, Skeleton, SkeletonCircle, Text, VStack, Grid, Bo
 import ProfileHeader from "../../components/Profile/ProfileHeader";
 import ProfileTabs from "../../components/Profile/ProfileTabs";
 import ProfilePosts from "../../components/Profile/ProfilePosts";
+import ProfileLikedPosts from "../../components/Profile/ProfileLikedPosts";
 import { useUserProfileStoreShallow } from "../../store/userProfileStore";
 import { useParams, useLocation } from "react-router-dom";
 import { Link as RouterLink } from "react-router-dom";
@@ -16,6 +17,7 @@ const ProfilePage = ({ isCurrentUser = false }) => {
 	const setUserProfileRef = useRef(setUserProfile);
 	const [isLoading, setIsLoading] = useState(true);
 	const [userProfile, setLocalUserProfile] = useState(null);
+	const [activeTab, setActiveTab] = useState('posts');
 	const location = useLocation();
 
 	// Update ref when setUserProfile changes
@@ -82,6 +84,11 @@ const ProfilePage = ({ isCurrentUser = false }) => {
 		return <UserNotFound />;
 	}
 
+	// Handle tab change
+	const handleTabChange = (tab) => {
+		setActiveTab(tab);
+	};
+
 	return (
 		<Container maxW='container.lg' py={5}>
 			<Flex py={10} px={4} pl={{ base: 4, md: 10 }} w={"full"} mx={"auto"} flexDirection={"column"}>
@@ -96,8 +103,13 @@ const ProfilePage = ({ isCurrentUser = false }) => {
 				borderColor={"whiteAlpha.300"}
 				direction={"column"}
 			>
-				<ProfileTabs />
-				{!isLoading && userProfile && <ProfilePosts profile={userProfile} />}
+				<ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
+				{!isLoading && userProfile && (
+					<>
+						{activeTab === 'posts' && <ProfilePosts profile={userProfile} />}
+						{activeTab === 'likes' && <ProfileLikedPosts profile={userProfile} />}
+					</>
+				)}
 				{isLoading && <ProfilePostsSkeleton />}
 			</Flex>
 		</Container>
