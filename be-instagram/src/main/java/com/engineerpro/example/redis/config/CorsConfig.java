@@ -18,6 +18,7 @@ public class CorsConfig {
         // Allow requests from React development server
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:3000",    // Create React App default
+            "http://localhost:3001",    // Frontend production port
             "http://localhost:5173",    // Vite default
             "http://localhost:8080",    // Your backend
             "http://127.0.0.1:3000",
