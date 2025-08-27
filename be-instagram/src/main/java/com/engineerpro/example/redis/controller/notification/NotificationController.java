@@ -28,7 +28,7 @@ import com.engineerpro.example.redis.util.LoggingUtil;
 import org.slf4j.Logger;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/notifications")
 public class NotificationController {
 
     private static final Logger logger = LoggingUtil.getLogger(NotificationController.class);

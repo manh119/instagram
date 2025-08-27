@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/presigned")
+@RequestMapping("/presigned")
 public class PreSignedUrlController {
     
     private static final Logger logger = LoggingUtil.getLogger(PreSignedUrlController.class);

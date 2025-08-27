@@ -75,14 +75,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		logger.info("=== Registering WebSocket STOMP Endpoints ===");
 		
-		registry.addEndpoint("/ws")
+		registry.addEndpoint("/api/ws")
 			.setAllowedOriginPatterns("*")
 			.withSockJS();
-		logger.info("STOMP endpoint registered: /ws (with SockJS)");
+		logger.info("STOMP endpoint registered: /api/ws (with SockJS)");
 		
-		registry.addEndpoint("/ws")
+		registry.addEndpoint("/api/ws")
 			.setAllowedOriginPatterns("*");
-		logger.info("STOMP endpoint registered: /ws (native WebSocket)");
+		logger.info("STOMP endpoint registered: /api/ws (native WebSocket)");
 		
 		logger.info("=== WebSocket STOMP Endpoints Registration Complete ===");
 		logger.info("Allowed origin patterns: *");
