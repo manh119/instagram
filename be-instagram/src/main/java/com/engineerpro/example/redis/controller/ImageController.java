@@ -3,6 +3,7 @@ package com.engineerpro.example.redis.controller;
 import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ import org.slf4j.Logger;
 
 @RestController
 @RequestMapping("/images")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"})
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173", "http://localhost:8080" })
 public class ImageController {
 
     private static final Logger logger = LoggingUtil.getLogger(ImageController.class);
@@ -28,42 +29,44 @@ public class ImageController {
     @Autowired
     private MinioClient minioClient;
 
+    @Value("${minio.bucket-name:my-bucket}")
+    private String bucketName;
+
     @GetMapping("/{filename}")
     public ResponseEntity<InputStreamResource> getImage(@PathVariable String filename) {
         LoggingUtil.logControllerEntry(logger, "getImage", "filename", filename);
-        
+
         try {
             // Log image request details
             String fileExtension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
-            LoggingUtil.logServiceDebug(logger, "Image request received", 
-                "filename", filename, 
-                "extension", fileExtension);
-            
+            LoggingUtil.logServiceDebug(logger, "Image request received",
+                    "filename", filename,
+                    "extension", fileExtension);
+
             // Get object from MinIO
             // Images are stored in the 'posts/' subfolder
             String objectKey = "posts/" + filename;
             InputStream stream = minioClient.getObject(
-                GetObjectArgs.builder()
-                    .bucket("spring-boot")
-                    .object(objectKey)
-                    .build()
-            );
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .build());
 
             // Determine content type based on file extension
             String contentType = determineContentType(filename);
-            LoggingUtil.logServiceDebug(logger, "Image retrieved successfully from MinIO", 
-                "filename", filename, 
-                "contentType", contentType,
-                "extension", fileExtension);
+            LoggingUtil.logServiceDebug(logger, "Image retrieved successfully from MinIO",
+                    "filename", filename,
+                    "contentType", contentType,
+                    "extension", fileExtension);
 
             // Return the image as a stream
             ResponseEntity<InputStreamResource> response = ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, contentType)
-                .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000") // Cache for 1 year
-                .body(new InputStreamResource(stream));
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000") // Cache for 1 year
+                    .body(new InputStreamResource(stream));
 
-            LoggingUtil.logControllerExit(logger, "getImage", 
-                "Image served successfully - filename: " + filename + ", contentType: " + contentType);
+            LoggingUtil.logControllerExit(logger, "getImage",
+                    "Image served successfully - filename: " + filename + ", contentType: " + contentType);
             return response;
 
         } catch (ErrorResponseException e) {
@@ -89,4 +92,3 @@ public class ImageController {
         }
     }
 }
-

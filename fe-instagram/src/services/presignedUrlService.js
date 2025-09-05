@@ -1,6 +1,6 @@
 import { authService } from './authService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 class PreSignedUrlService {
 
@@ -13,7 +13,7 @@ class PreSignedUrlService {
             console.log('File Name:', fileName);
             console.log('Content Type:', contentType);
 
-            const response = await fetch(`${API_BASE_URL}/api/presigned/upload/post-image`, {
+            const response = await fetch(`${API_BASE_URL}/presigned/upload/post-image`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ class PreSignedUrlService {
             console.log('File Name:', fileName);
             console.log('Content Type:', contentType);
 
-            const response = await fetch(`${API_BASE_URL}/api/presigned/upload/profile-image`, {
+            const response = await fetch(`${API_BASE_URL}/presigned/upload/profile-image`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

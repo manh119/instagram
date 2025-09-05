@@ -1,75 +1,85 @@
 package com.engineerpro.example.redis.config;
 
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.minio.MinioClient;
-
 @Configuration
 public class MinioConfig {
-  
+
+  private static final Logger log = LoggerFactory.getLogger(MinioConfig.class);
+
+  @Value("${spring.io.minio.endpoint}")
+  private String minioEndpoint;
+
+  @Value("${spring.io.minio.external-endpoint}")
+  private String externalMinioEndpoint;
+
+  @Value("${spring.io.minio.access-key}")
+  private String minioAccessKey;
+
+  @Value("${spring.io.minio.secret-key}")
+  private String minioSecretKey;
+
+  @Value("${minio.bucket-name:my-bucket}")
+  private String defaultBucket;
+
+  /**
+   * Default MinIO client for internal use (backend ↔ MinIO inside Docker).
+   */
   @Bean
   public MinioClient minioClient() {
-    // Use environment variables with Docker service names as fallback
-    String minioEndpoint = System.getenv("MINIO_ENDPOINT");
-    if (minioEndpoint == null || minioEndpoint.isEmpty()) {
-      // In Docker environment, use the service name
-      minioEndpoint = "http://minio:9000";
-    }
-    
-    String minioAccessKey = System.getenv("MINIO_ACCESS_KEY");
-    if (minioAccessKey == null || minioAccessKey.isEmpty()) {
-      minioAccessKey = "minioadmin";
-    }
-    
-    String minioSecretKey = System.getenv("MINIO_SECRET_KEY");
-    if (minioSecretKey == null || minioSecretKey.isEmpty()) {
-      minioSecretKey = "minioadmin";
-    }
-    
-    // Add logging to help with debugging
-    System.out.println("MinIO Configuration:");
-    System.out.println("  Endpoint: " + minioEndpoint);
-    System.out.println("  Access Key: " + minioAccessKey);
-    System.out.println("  Secret Key: " + (minioSecretKey.length() > 0 ? "***" : "empty"));
-    
-    return MinioClient.builder()
+    MinioClient client = MinioClient.builder()
         .endpoint(minioEndpoint)
         .credentials(minioAccessKey, minioSecretKey)
         .build();
+
+    createBucketIfNotExists(client, defaultBucket);
+
+    return client;
   }
-  
+
   /**
-   * Bean for MinIO client that generates presigned URLs with external endpoint
-   * This is needed because the frontend (browser) needs to access MinIO directly
+   * MinIO client for generating presigned URLs (frontend/browser access).
    */
   @Bean(name = "presignedUrlMinioClient")
   public MinioClient presignedUrlMinioClient() {
-    // For presigned URLs, always use the external endpoint that the frontend can access
-    String externalMinioEndpoint = System.getenv("MINIO_EXTERNAL_ENDPOINT");
-    if (externalMinioEndpoint == null || externalMinioEndpoint.isEmpty()) {
-      // On Linux Docker, use the gateway IP to reach the host machine from inside the container
-      externalMinioEndpoint = "http://172.19.0.1:9000";
-    }
-    
-    String minioAccessKey = System.getenv("MINIO_ACCESS_KEY");
-    if (minioAccessKey == null || minioAccessKey.isEmpty()) {
-      minioAccessKey = "minioadmin";
-    }
-    
-    String minioSecretKey = System.getenv("MINIO_SECRET_KEY");
-    if (minioSecretKey == null || minioSecretKey.isEmpty()) {
-      minioSecretKey = "minioadmin";
-    }
-    
-    System.out.println("MinIO Presigned URL Configuration:");
-    System.out.println("  External Endpoint: " + externalMinioEndpoint);
-    System.out.println("  Access Key: " + minioAccessKey);
-    System.out.println("  Secret Key: " + (minioSecretKey.length() > 0 ? "***" : "empty"));
-    
+    log.info("MinIO Presigned URL Client Configured:");
+    log.info("  External Endpoint: {}", externalMinioEndpoint);
+    log.info("  Access Key: {}", maskKey(minioAccessKey));
+
     return MinioClient.builder()
         .endpoint(externalMinioEndpoint)
         .credentials(minioAccessKey, minioSecretKey)
         .build();
+  }
+
+  private String maskKey(String key) {
+    if (key == null || key.isEmpty())
+      return "empty";
+    if (key.length() <= 4)
+      return "****";
+    return key.substring(0, 2) + "****" + key.substring(key.length() - 2);
+  }
+
+  private void createBucketIfNotExists(MinioClient client, String bucketName) {
+    try {
+      boolean exists = client.bucketExists(
+          BucketExistsArgs.builder().bucket(bucketName).build());
+
+      if (!exists) {
+        client.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        log.info("✅ MinIO bucket '{}' created.", bucketName);
+      } else {
+        log.info("ℹ️ MinIO bucket '{}' already exists.", bucketName);
+      }
+    } catch (Exception e) {
+      log.error("❌ Failed to create/check MinIO bucket '{}': {}", bucketName, e.getMessage(), e);
+    }
   }
 }

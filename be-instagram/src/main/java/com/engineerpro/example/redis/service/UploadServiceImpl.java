@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.engineerpro.example.redis.config.MediaConfig;
@@ -16,14 +17,17 @@ import org.slf4j.Logger;
 
 @Service
 public class UploadServiceImpl implements UploadService {
-  
+
   private static final Logger logger = LoggingUtil.getLogger(UploadServiceImpl.class);
-  
+
   @Autowired
   MinioClient minioClient;
 
   @Autowired
   MediaConfig mediaConfig;
+
+  @Value("${minio.bucket-name:my-bucket}")
+  private String bucketName;
 
   private String getFileExtension(String base64String) {
     String[] strings = base64String.split(",");
@@ -70,21 +74,21 @@ public class UploadServiceImpl implements UploadService {
   @Override
   public String uploadImage(String base64) {
     LoggingUtil.logBusinessEvent(logger, "Starting image upload");
-    
+
     try {
       String fileName = String.format("%s.%s", UUID.randomUUID().toString(), this.getFileExtension(base64));
       LoggingUtil.logServiceDebug(logger, "Generated filename", "fileName", fileName);
-      
-      minioClient.putObject(PutObjectArgs.builder().bucket("spring-boot")
+
+      minioClient.putObject(PutObjectArgs.builder().bucket(bucketName)
           .object(fileName)
           .stream(this.getImageFromBase64(base64), -1, 5242880).build());
-      
+
       LoggingUtil.logBusinessEvent(logger, "Image uploaded successfully", "fileName", fileName);
-      
+
       // Return full URL that frontend can access
       String imageUrl = mediaConfig.getImageUrl(fileName);
       LoggingUtil.logServiceDebug(logger, "Image URL generated", "imageUrl", imageUrl);
-      
+
       return imageUrl;
     } catch (Exception e) {
       LoggingUtil.logServiceWarning(logger, "Failed to upload image", "Error", e.getMessage());
@@ -96,43 +100,43 @@ public class UploadServiceImpl implements UploadService {
   @Override
   public String uploadVideo(String base64) {
     LoggingUtil.logBusinessEvent(logger, "Starting video upload");
-    
+
     try {
       // Log video metadata
       String videoFormat = getFileExtension(base64);
       int videoSizeBytes = getVideoFromBase64(base64).available();
       double videoSizeMB = videoSizeBytes / (1024.0 * 1024.0);
-      
-      LoggingUtil.logServiceDebug(logger, "Video upload details", 
-          "Format", videoFormat, 
+
+      LoggingUtil.logServiceDebug(logger, "Video upload details",
+          "Format", videoFormat,
           "Size (bytes)", videoSizeBytes,
           "Size (MB)", String.format("%.2f", videoSizeMB));
-      
+
       // Validate video size (100MB limit)
       if (videoSizeMB > 100) {
-        LoggingUtil.logServiceWarning(logger, "Video file too large", 
+        LoggingUtil.logServiceWarning(logger, "Video file too large",
             "Size (MB)", String.format("%.2f", videoSizeMB),
             "Limit (MB)", 100);
         throw new IllegalArgumentException("Video file size exceeds 100MB limit");
       }
-      
+
       String fileName = String.format("%s.%s", UUID.randomUUID().toString(), videoFormat);
       LoggingUtil.logServiceDebug(logger, "Generated video filename", "fileName", fileName);
-      
+
       // Upload to MinIO
-      minioClient.putObject(PutObjectArgs.builder().bucket("spring-boot")
+      minioClient.putObject(PutObjectArgs.builder().bucket(bucketName)
           .object(fileName)
           .stream(getVideoFromBase64(base64), -1, 104857600).build()); // 100MB limit for videos
-      
-      LoggingUtil.logBusinessEvent(logger, "Video uploaded successfully to MinIO", 
+
+      LoggingUtil.logBusinessEvent(logger, "Video uploaded successfully to MinIO",
           "fileName", fileName,
           "format", videoFormat,
           "sizeMB", String.format("%.2f", videoSizeMB));
-      
+
       // Return full URL that frontend can access
       String videoUrl = mediaConfig.getVideoUrl(fileName);
       LoggingUtil.logServiceDebug(logger, "Video URL generated", "videoUrl", videoUrl);
-      
+
       return videoUrl;
     } catch (IllegalArgumentException e) {
       LoggingUtil.logServiceWarning(logger, "Video upload validation failed", "Error", e.getMessage());
