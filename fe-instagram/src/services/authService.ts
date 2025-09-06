@@ -26,7 +26,7 @@ export interface AuthState {
 class AuthService {
     private tokenKey = 'authToken';
     private userKey = 'authUser';
-    private baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    private baseUrl = import.meta.env.VITE_API_BASE_URL;
 
     // Get current authentication state
     getAuthState(): AuthState {

@@ -1,7 +1,7 @@
 // Notification Service using fetch API
 class NotificationService {
     constructor() {
-        this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+        this.baseURL = import.meta.env.VITE_API_BASE_URL;
     }
 
     // Get JWT token from localStorage
@@ -37,7 +37,7 @@ class NotificationService {
     // Get all notifications for the current user
     async getNotifications(page = 1, limit = 20) {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications?page=${page}&limit=${limit}`, {
+            const response = await fetch(`${this.baseURL}/notifications?page=${page}&limit=${limit}`, {
                 method: 'GET',
                 headers: this.getAuthHeaders()
             });
@@ -56,7 +56,7 @@ class NotificationService {
     // Get unread notifications count
     async getUnreadCount() {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications/unread/count`, {
+            const response = await fetch(`${this.baseURL}/notifications/unread/count`, {
                 method: 'GET',
                 headers: this.getAuthHeaders()
             });
@@ -75,7 +75,7 @@ class NotificationService {
     // Mark a notification as read
     async markAsRead(notificationId) {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications/${notificationId}/read`, {
+            const response = await fetch(`${this.baseURL}/notifications/${notificationId}/read`, {
                 method: 'PUT',
                 headers: this.getAuthHeaders()
             });
@@ -94,7 +94,7 @@ class NotificationService {
     // Mark all notifications as read
     async markAllAsRead() {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications/read-all`, {
+            const response = await fetch(`${this.baseURL}/notifications/read-all`, {
                 method: 'PUT',
                 headers: this.getAuthHeaders()
             });
@@ -113,7 +113,7 @@ class NotificationService {
     // Delete a notification
     async deleteNotification(notificationId) {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications/${notificationId}`, {
+            const response = await fetch(`${this.baseURL}/notifications/${notificationId}`, {
                 method: 'DELETE',
                 headers: this.getAuthHeaders()
             });
@@ -132,7 +132,7 @@ class NotificationService {
     // Delete all read notifications
     async deleteAllRead() {
         try {
-            const response = await fetch(`${this.baseURL}/api/notifications/read`, {
+            const response = await fetch(`${this.baseURL}/notifications/read`, {
                 method: 'DELETE',
                 headers: this.getAuthHeaders()
             });

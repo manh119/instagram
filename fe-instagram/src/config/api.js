@@ -1,8 +1,8 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Media Configuration
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:8080';
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
 
 export const config = {
     api: {

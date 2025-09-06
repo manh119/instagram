@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import useShowToast from "./useShowToast";
-import { updateUserMock } from "../services/mockData";
 import useUserProfileStore from "../store/userProfileStore";
 // In mock-only build, we skip Firebase storage entirely.
 
@@ -32,7 +31,6 @@ const useEditProfile = () => {
 				profilePicURL: URL || authUser.profilePicURL,
 			};
 
-			updateUserMock(authUser.uid, updatedUser);
 			localStorage.setItem("user-info", JSON.stringify(updatedUser));
 			setAuthUser(updatedUser);
 			setUserProfile(updatedUser);

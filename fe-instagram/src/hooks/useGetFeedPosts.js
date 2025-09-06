@@ -13,6 +13,7 @@ const useGetFeedPosts = () => {
 	const { user: authUser } = useAuth();
 	const showToast = useShowToast();
 	const { setUserProfile } = useUserProfileStore();
+	const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
 
 	const loadMorePosts = async (page = 0, append = false) => {
 		if (!authUser) return;
@@ -30,7 +31,7 @@ const useGetFeedPosts = () => {
 						imageUrl: post.imageUrl,
 						imageURL: post.imageURL, // Check if backend is using different case
 						createdBy: post.createdBy,
-						fullImageUrl: post.imageUrl ? `http://localhost:8080${post.imageUrl}` : 'No image'
+						fullImageUrl: post.imageUrl ? MEDIA_BASE_URL + `${post.imageUrl}` : 'No image'
 					});
 				});
 
