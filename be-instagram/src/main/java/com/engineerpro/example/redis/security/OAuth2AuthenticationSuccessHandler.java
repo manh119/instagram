@@ -195,7 +195,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             LoggingUtil.logBusinessEvent(logger, "User Updated Successfully", "User ID", savedUser.getId());
 
             // Also update the profile username if it's an email
-            Profile existingProfile = profileRepository.findOneByUser(user);
+            Profile existingProfile = profileRepository.findOneByUser(user).orElse(null);
             if (existingProfile != null) {
                 Profile profile = existingProfile;
                 if (profile.getUsername().contains("@")) {

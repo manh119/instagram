@@ -193,9 +193,13 @@ public class UserServiceImpl implements UserService {
                 .credentialsNonExpired(true)
                 .build();
             
-            // Set default authority (USER role)
+            // Set default authority (USER role) - create if not exists
             Authority userAuthority = authorityRepository.findByAuthority("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("Default user authority not found"));
+                .orElseGet(() -> {
+                    Authority newAuthority = new Authority();
+                    newAuthority.setAuthority("ROLE_USER");
+                    return authorityRepository.save(newAuthority);
+                });
             user.setAuthorities(Set.of(userAuthority));
             
             User savedUser = userRepository.save(user);

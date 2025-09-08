@@ -1,5 +1,6 @@
 package com.engineerpro.example.redis.service.profile;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,15 +36,28 @@ public class ProfileServiceImpl implements ProfileService {
   @Override
   public Profile getUserProfile(UserPrincipal userPrincipal) {
     User user = userRepository.findById(userPrincipal.getId()).orElseThrow(UserNotFoundException::new);
-    Profile profile = profileRepository.findOneByUser(user);
-    if (Objects.isNull(profile)) {
+    
+    // Get all profiles for this user (handles duplicates)
+    List<Profile> profiles = profileRepository.findByUser(user);
+    
+    Profile profile;
+    if (profiles.isEmpty()) {
+      // No profile found, create a new one
       profile = Profile.builder()
         .user(user)
         .displayName(userPrincipal.getName())
         .username(userPrincipal.getUsername())
         .build();
       profileRepository.save(profile);
+    } else if (profiles.size() == 1) {
+      // Single profile found, use it
+      profile = profiles.get(0);
+    } else {
+      // Multiple profiles found, use the first one (oldest by ID)
+      // TODO: Consider cleaning up duplicate profiles in the future
+      profile = profiles.get(0);
     }
+    
     return profile;
   }
 
