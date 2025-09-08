@@ -32,6 +32,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import postService from "../../services/postService";
 import { NotificationsLogo, UnlikeLogo } from "../../assets/constants";
 import { timeAgo } from "../../utils/timeAgo";
+import { useImageUrl } from "../../hooks/useImageUrl";
 
 const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	const { handlePostComment, isCommenting } = usePostComment();
@@ -42,6 +43,9 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 	const [comment, setComment] = useState("");
 	const { user: authUser } = useAuth();
 	const toast = useToast();
+
+	// Use pre-signed URL for image display
+	const { url: imageUrl, loading: imageLoading, error: imageError } = useImageUrl(post.imageUrl);
 
 	// Color scheme for better UX
 	const bgColor = useColorModeValue("white", "gray.800");
@@ -131,14 +135,40 @@ const CommentsModal = ({ isOpen, onClose, post, creatorProfile }) => {
 						<GridItem>
 							<Box borderRadius="lg" overflow="hidden" boxShadow="lg" w="full">
 								{post.imageUrl && (
-									<Image
-										src={post.imageUrl}
-										alt="Post image"
-										w="full"
-										h="auto"
-										objectFit="cover"
-										maxH="700px"
-									/>
+									<>
+										{imageLoading && (
+											<Box
+												display="flex"
+												alignItems="center"
+												justifyContent="center"
+												h="400px"
+												bg="gray.100"
+											>
+												<Text color="gray.500">Loading image...</Text>
+											</Box>
+										)}
+										{imageError && (
+											<Box
+												display="flex"
+												alignItems="center"
+												justifyContent="center"
+												h="400px"
+												bg="red.50"
+											>
+												<Text color="red.500">Failed to load image</Text>
+											</Box>
+										)}
+										{imageUrl && !imageLoading && !imageError && (
+											<Image
+												src={imageUrl}
+												alt="Post image"
+												w="full"
+												h="auto"
+												objectFit="cover"
+												maxH="700px"
+											/>
+										)}
+									</>
 								)}
 								{post.videoUrl && (
 									<Box as="video"

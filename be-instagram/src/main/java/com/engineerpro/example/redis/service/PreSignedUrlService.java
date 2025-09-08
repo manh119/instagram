@@ -20,7 +20,7 @@ public class PreSignedUrlService {
     @Autowired
     private io.minio.MinioClient minioClient;
 
-    @Value("${minio.bucket-name:my-bucket}")
+    @Value("${spring.io.minio.bucket-name}")
     private String bucketName;
 
     /**
@@ -109,6 +109,45 @@ public class PreSignedUrlService {
             logger.error("=== Failed to Generate Profile Image Pre-signed URL ===");
             logger.error("Error: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate profile image pre-signed URL", e);
+        }
+    }
+
+    /**
+     * Generate pre-signed URL for image viewing (GET method)
+     */
+    public PreSignedUrlResponse generateImageViewUrl(String objectKey) {
+        try {
+            logger.info("=== Generating Pre-signed URL for Image Viewing ===");
+            logger.info("Object Key: {}", objectKey);
+            logger.info("Bucket: {}", bucketName);
+
+            // Generate pre-signed URL using GET method
+            String viewUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(io.minio.http.Method.GET)
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .expiry(7, TimeUnit.DAYS) // 7 days for viewing
+                            .build());
+
+            PreSignedUrlResponse response = PreSignedUrlResponse.builder()
+                    .uploadUrl(viewUrl) // Reusing the same field for view URL
+                    .objectKey(objectKey)
+                    .bucketName(bucketName)
+                    .expiresIn(7 * 24 * 60 * 60) // 7 days in seconds
+                    .formData(Map.of())
+                    .build();
+
+            logger.info("=== Image View URL Generated Successfully ===");
+            logger.info("View URL: {}", viewUrl);
+            logger.info("Expires In: {} seconds", response.getExpiresIn());
+
+            return response;
+
+        } catch (Exception e) {
+            logger.error("=== Failed to Generate Image View URL ===");
+            logger.error("Error: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate image view URL", e);
         }
     }
 

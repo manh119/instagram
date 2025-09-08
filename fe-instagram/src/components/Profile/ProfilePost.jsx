@@ -19,6 +19,7 @@ import postService from "../../services/postService";
 import ConfirmDialog from "../Common/ConfirmDialog";
 import CommentsModal from "../Modals/CommentsModal";
 import { useDisclosure } from "@chakra-ui/react";
+import { useImageUrl } from "../../hooks/useImageUrl";
 
 const ProfilePost = ({ post }) => {
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -28,6 +29,9 @@ const ProfilePost = ({ post }) => {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const deletePost = usePostStore((state) => state.deletePost);
+
+	// Use pre-signed URL for image display
+	const { url: imageUrl, loading: imageLoading, error: imageError } = useImageUrl(post?.imageUrl);
 	const decrementPostsCount = useUserProfileStore((state) => state.decrementPostsCount);
 
 	// Debug logging to see post data
@@ -143,13 +147,41 @@ const ProfilePost = ({ post }) => {
 			);
 		} else if (post.imageUrl) {
 			return (
-				<Image
-					src={post.imageUrl}
-					alt='profile post'
-					w={"100%"}
-					h={"100%"}
-					objectFit="cover"
-				/>
+				<Box position="relative" w="100%" h="100%">
+					{imageLoading && (
+						<Box
+							position="absolute"
+							top="50%"
+							left="50%"
+							transform="translate(-50%, -50%)"
+							color="gray.500"
+							fontSize="sm"
+						>
+							Loading...
+						</Box>
+					)}
+					{imageError && (
+						<Box
+							position="absolute"
+							top="50%"
+							left="50%"
+							transform="translate(-50%, -50%)"
+							color="red.500"
+							fontSize="sm"
+						>
+							Error
+						</Box>
+					)}
+					{imageUrl && (
+						<Image
+							src={imageUrl}
+							alt='profile post'
+							w={"100%"}
+							h={"100%"}
+							objectFit="cover"
+						/>
+					)}
+				</Box>
 			);
 		}
 		return null;

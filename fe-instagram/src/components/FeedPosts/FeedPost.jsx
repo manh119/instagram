@@ -8,6 +8,7 @@ import ResponsiveVideoContainer from "../Common/ResponsiveVideoContainer";
 import { useState, useEffect } from "react";
 import usePostStore from "../../store/postStore";
 import { useNavigate } from "react-router-dom";
+import { useImageUrl } from "../../hooks/useImageUrl";
 
 const FeedPost = ({ post, isDetailPage = false }) => {
 	const [videoError, setVideoError] = useState(false);
@@ -17,6 +18,9 @@ const FeedPost = ({ post, isDetailPage = false }) => {
 	// Get the latest post data from the store to ensure we have the most up-to-date likes/comments
 	const { posts } = usePostStore();
 	const currentPost = posts.find(p => p.id === post.id) || post;
+
+	// Use pre-signed URL for image display
+	const { url: imageUrl, loading: imageLoading, error: imageError } = useImageUrl(currentPost.imageUrl);
 
 	// Debug logging to see what's happening with the post data
 	useEffect(() => {
@@ -109,13 +113,27 @@ const FeedPost = ({ post, isDetailPage = false }) => {
 			);
 		} else if (currentPost.imageUrl) {
 			return (
-				<Image
-					src={currentPost.imageUrl}
-					alt={"FEED POST IMG"}
-					maxH={isDetailPage ? "70vh" : "auto"}
-					objectFit={isDetailPage ? "contain" : "cover"}
-					w="100%"
-				/>
+				<VStack spacing={2} w="100%">
+					{imageLoading && (
+						<Text fontSize="sm" color="gray.500">
+							Loading image...
+						</Text>
+					)}
+					{imageError && (
+						<Text fontSize="sm" color="red.500">
+							Failed to load image
+						</Text>
+					)}
+					{imageUrl && (
+						<Image
+							src={imageUrl}
+							alt={"FEED POST IMG"}
+							maxH={isDetailPage ? "70vh" : "auto"}
+							objectFit={isDetailPage ? "contain" : "cover"}
+							w="100%"
+						/>
+					)}
+				</VStack>
 			);
 		}
 		return null;

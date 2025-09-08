@@ -108,6 +108,40 @@ public class PreSignedUrlController {
     }
     
     /**
+     * Generate pre-signed URL for image viewing
+     */
+    @PostMapping("/view/image")
+    public ResponseEntity<?> generateImageViewUrl(
+            @RequestBody ImageViewRequest request,
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        
+        try {
+            logger.info("=== Image View URL Request ===");
+            logger.info("User: {}", userDetails.getUsername());
+            logger.info("Object Key: {}", request.getObjectKey());
+            
+            // Validate request
+            if (request.getObjectKey() == null || request.getObjectKey().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Object key is required"));
+            }
+            
+            // Generate pre-signed URL
+            PreSignedUrlService.PreSignedUrlResponse response = 
+                preSignedUrlService.generateImageViewUrl(request.getObjectKey());
+            
+            logger.info("=== Image View URL Generated Successfully ===");
+            logger.info("View URL: {}", response.getUploadUrl());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("=== Failed to Generate Image View URL ===");
+            logger.error("Error: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to generate view URL"));
+        }
+    }
+    
+    /**
      * Validate if content type is a valid image type
      */
     private boolean isValidImageType(String contentType) {
@@ -152,5 +186,18 @@ public class PreSignedUrlController {
         // Setters
         public void setFileName(String fileName) { this.fileName = fileName; }
         public void setContentType(String contentType) { this.contentType = contentType; }
+    }
+    
+    /**
+     * Request DTO for image viewing
+     */
+    public static class ImageViewRequest {
+        private String objectKey;
+        
+        // Getters
+        public String getObjectKey() { return objectKey; }
+        
+        // Setters
+        public void setObjectKey(String objectKey) { this.objectKey = objectKey; }
     }
 }

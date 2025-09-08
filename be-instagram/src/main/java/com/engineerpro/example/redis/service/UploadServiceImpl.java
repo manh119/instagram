@@ -26,7 +26,7 @@ public class UploadServiceImpl implements UploadService {
   @Autowired
   MediaConfig mediaConfig;
 
-  @Value("${minio.bucket-name:my-bucket}")
+  @Value("${spring.io.minio.bucket-name}")
   private String bucketName;
 
   private String getFileExtension(String base64String) {

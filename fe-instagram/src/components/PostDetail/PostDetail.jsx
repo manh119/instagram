@@ -20,6 +20,7 @@ import postService from '../../services/postService';
 import useShowToast from '../../hooks/useShowToast';
 import Comment from '../Comment/Comment';
 import PostFooter from '../FeedPosts/PostFooter';
+import { useImageUrl } from '../../hooks/useImageUrl';
 
 const PostDetail = () => {
     const { postId } = useParams();
@@ -30,6 +31,9 @@ const PostDetail = () => {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Use pre-signed URL for image display
+    const { url: imageUrl, loading: imageLoading, error: imageError } = useImageUrl(post?.imageUrl);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -95,13 +99,30 @@ const PostDetail = () => {
                         {/* Media Section */}
                         <Box flex="1" bg="black">
                             {post.imageUrl ? (
-                                <Image
-                                    src={post.imageUrl}
-                                    alt="Post"
-                                    w="full"
-                                    h="auto"
-                                    objectFit="contain"
-                                />
+                                <VStack spacing={2} w="100%">
+                                    {imageLoading && (
+                                        <Center h="400px">
+                                            <VStack>
+                                                <Spinner size="lg" />
+                                                <Text>Loading image...</Text>
+                                            </VStack>
+                                        </Center>
+                                    )}
+                                    {imageError && (
+                                        <Center h="400px" color="red.400">
+                                            <Text>Failed to load image</Text>
+                                        </Center>
+                                    )}
+                                    {imageUrl && (
+                                        <Image
+                                            src={imageUrl}
+                                            alt="Post"
+                                            w="full"
+                                            h="auto"
+                                            objectFit="contain"
+                                        />
+                                    )}
+                                </VStack>
                             ) : post.videoUrl ? (
                                 <video
                                     src={post.videoUrl}

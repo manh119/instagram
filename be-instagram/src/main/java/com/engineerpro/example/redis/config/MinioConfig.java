@@ -26,7 +26,7 @@ public class MinioConfig {
   @Value("${spring.io.minio.secret-key}")
   private String minioSecretKey;
 
-  @Value("${minio.bucket-name:my-bucket}")
+  @Value("${spring.io.minio.bucket-name}")
   private String defaultBucket;
 
   /**
@@ -35,28 +35,15 @@ public class MinioConfig {
   @Bean
   public MinioClient minioClient() {
     MinioClient client = MinioClient.builder()
-        .endpoint(minioEndpoint)
+        // .endpoint(minioEndpoint)
+        .endpoint(externalMinioEndpoint)
         .credentials(minioAccessKey, minioSecretKey)
+        .region("us-east-1")
         .build();
 
     createBucketIfNotExists(client, defaultBucket);
 
     return client;
-  }
-
-  /**
-   * MinIO client for generating presigned URLs (frontend/browser access).
-   */
-  @Bean(name = "presignedUrlMinioClient")
-  public MinioClient presignedUrlMinioClient() {
-    log.info("MinIO Presigned URL Client Configured:");
-    log.info("  External Endpoint: {}", externalMinioEndpoint);
-    log.info("  Access Key: {}", maskKey(minioAccessKey));
-
-    return MinioClient.builder()
-        .endpoint(externalMinioEndpoint)
-        .credentials(minioAccessKey, minioSecretKey)
-        .build();
   }
 
   private String maskKey(String key) {
