@@ -50,9 +50,8 @@ public class RedisNotificationListener implements MessageListener {
                 NotificationResponse notification = objectMapper.readValue(payload, NotificationResponse.class);
                 
                 // Send to WebSocket if user is connected to this instance
-                messagingTemplate.convertAndSendToUser(
-                    userId.toString(), 
-                    "/queue/notifications", 
+                messagingTemplate.convertAndSend(
+                    "/queue/user." + userId + ".notifications", 
                     notification
                 );
                 

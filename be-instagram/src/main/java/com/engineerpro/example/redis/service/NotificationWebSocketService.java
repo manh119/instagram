@@ -45,20 +45,19 @@ public class NotificationWebSocketService {
             logger.info("Notification Type: {}", notification.getType());
             logger.info("Notification Message: {}", notification.getMessage());
 
-            String destination = "/user/" + userId + "/queue/notifications";
+            String destination = "/queue/user." + userId + ".notifications";
             logger.info("WebSocket Destination: {}", destination);
 
-            // messagingTemplate.convertAndSendToUser(
-            // userId.toString(),
-            // "/queue/notifications",
-            // notification
-            // );
+            messagingTemplate.convertAndSend(
+                destination,
+                notification
+            );
 
             logger.info("=== WebSocket Message Sent Successfully ===");
             logger.info("Message sent to destination: {}", destination);
 
             // Also publish to Redis for other instances to pick up
-            publishNotificationToRedis(userId, notification);
+            // publishNotificationToRedis(userId, notification);
 
             logger.info("=== WebSocket Notification Complete ===");
             logger.info("Notification sent via WebSocket and Redis");
@@ -120,12 +119,11 @@ public class NotificationWebSocketService {
             logger.info("User ID: {}", userId);
             logger.info("Unread Count: {}", unreadCount);
 
-            String destination = "/user/" + userId + "/queue/unread-count";
+            String destination = "/queue/user." + userId + ".unread-count";
             logger.info("WebSocket Destination: {}", destination);
 
-            messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
-                    "/queue/unread-count",
+            messagingTemplate.convertAndSend(
+                    destination,
                     new UnreadCountUpdate(unreadCount));
 
             logger.info("=== WebSocket Unread Count Update Success ===");

@@ -50,8 +50,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 			logger.info("Relay Port: {}", relayPort);
 			logger.info("Relay Login: {}", relayLogin);
 			
-			// For production with RabbitMQ STOMP relay
-			config.enableStompBrokerRelay("/topic", "/user", "/queue")
+			// For production with RabbitMQ STOMP relay - use only /topic and /queue
+			config.enableStompBrokerRelay("/topic", "/queue")
 					.setRelayHost(relayHost)
 					.setRelayPort(relayPort)
 					.setClientLogin(relayLogin)

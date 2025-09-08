@@ -24,10 +24,36 @@ class WebSocketService {
         this.userId = null;
         this.connecting = false;
         this.receivedNotificationIds = new Set(); // Track received notification IDs
+        this.componentRefCount = 0; // Track how many components are using this service
+        this.lastConnectionAttempt = 0; // Track last connection attempt time
+        this.connectionPromise = null; // Track ongoing connection promise
+        this.connectionLock = false; // Global connection lock to prevent multiple connections
 
         // Store the instance
         WebSocketService.instance = this;
         console.log('WebSocketService instance stored:', WebSocketService.instance);
+    }
+
+    /**
+     * Register a component that's using this service
+     */
+    registerComponent() {
+        this.componentRefCount++;
+        console.log('Component registered. Total components using WebSocket:', this.componentRefCount);
+    }
+
+    /**
+     * Unregister a component that's no longer using this service
+     */
+    unregisterComponent() {
+        this.componentRefCount = Math.max(0, this.componentRefCount - 1);
+        console.log('Component unregistered. Total components using WebSocket:', this.componentRefCount);
+
+        // If no components are using the service, disconnect
+        if (this.componentRefCount === 0) {
+            console.log('No components using WebSocket, disconnecting...');
+            this.disconnect();
+        }
     }
 
     /**
@@ -42,7 +68,7 @@ class WebSocketService {
         // Prevent multiple connections for the same user
         if (this.isConnected && this.userId === userId) {
             console.log('WebSocket already connected for user:', userId);
-            return;
+            return Promise.resolve();
         }
 
         // If connecting to a different user, disconnect first
@@ -51,27 +77,45 @@ class WebSocketService {
             this.disconnect();
         }
 
-        // Add connection guard to prevent race conditions
-        if (this.connecting) {
-            console.log('WebSocket connection already in progress, skipping...');
-            return;
+        // Check global connection lock
+        if (this.connectionLock) {
+            console.log('WebSocket connection is locked, skipping...');
+            return Promise.resolve();
+        }
+
+        // If there's already a connection promise, return it
+        if (this.connectionPromise) {
+            console.log('WebSocket connection already in progress, returning existing promise...');
+            return this.connectionPromise;
         }
 
         // If we have a failed connection, allow retry after some time
-        if (this.lastConnectionAttempt && Date.now() - this.lastConnectionAttempt < 5000) {
+        if (this.lastConnectionAttempt && Date.now() - this.lastConnectionAttempt < 1000) {
             console.log('Connection attempt too recent, skipping...');
-            return;
+            return Promise.resolve();
         }
 
+        // Set connection lock
+        this.connectionLock = true;
         this.connecting = true;
         this.lastConnectionAttempt = Date.now();
         this.userId = userId;
         console.log('Attempting to connect to WebSocket for user:', userId);
+
+        // Create and store the connection promise
+        this.connectionPromise = this.performConnection(userId);
+        return this.connectionPromise;
+    }
+
+    /**
+     * Perform the actual WebSocket connection
+     */
+    async performConnection(userId) {
         console.log('User ID type:', typeof userId, 'Value:', userId);
 
         try {
             // Create STOMP client with native WebSocket
-            const baseUrl = import.meta.env.VITE_API_BASE_URL;
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
             const wsUrl = `${baseUrl}/ws`.replace('http', 'ws');
             console.log('Base URL from env:', baseUrl);
             console.log('WebSocket URL constructed:', wsUrl);
@@ -146,11 +190,15 @@ class WebSocketService {
             }
 
             this.connecting = false;
+            this.connectionLock = false; // Release the lock on success
+            this.connectionPromise = null; // Clear the promise on success
 
         } catch (error) {
             console.error('Failed to connect to WebSocket:', error);
             console.error('Error details:', error.message, error.stack);
             this.connecting = false;
+            this.connectionLock = false; // Release the lock on error
+            this.connectionPromise = null; // Clear the promise on error
             this.handleReconnect();
         }
     }
@@ -162,9 +210,6 @@ class WebSocketService {
         console.log('WebSocket connected successfully:', frame);
         this.isConnected = true;
         this.reconnectAttempts = 0;
-
-        // Authenticate user
-        this.authenticate();
 
         // Subscribe to user-specific channels
         this.subscribeToUserChannels();
@@ -253,7 +298,7 @@ class WebSocketService {
 
         // Subscribe to notifications
         const notificationSubscription = this.stompClient.subscribe(
-            `/user/${this.userId}/queue/notifications`,
+            `/queue/user.${this.userId}.notifications`,
             (message) => {
                 try {
                     console.log('Received notification message:', message);
@@ -295,7 +340,7 @@ class WebSocketService {
 
         // Subscribe to unread count updates
         const unreadCountSubscription = this.stompClient.subscribe(
-            `/user/${this.userId}/queue/unread-count`,
+            `/queue/user.${this.userId}.unread-count`,
             (message) => {
                 try {
                     console.log('Received unread count message:', message);
@@ -382,6 +427,8 @@ class WebSocketService {
         this.isConnected = false;
         this.connecting = false;
         this.userId = null;
+        this.connectionLock = false; // Release the connection lock
+        this.connectionPromise = null; // Clear the connection promise
         this.clearSubscriptions();
         this.stopPingInterval();
         this.receivedNotificationIds.clear(); // Clear received notification IDs
