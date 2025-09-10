@@ -19,6 +19,7 @@ RUN gradle dependencies --no-daemon --build-cache --gradle-user-home=/tmp/.gradl
 
 # Copy source code
 COPY src/ src/
+COPY .env.prod .env.prod
 
 # Build the application with build cache
 RUN gradle build -x test --no-daemon --build-cache --gradle-user-home=/tmp/.gradle

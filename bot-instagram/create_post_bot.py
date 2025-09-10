@@ -16,7 +16,7 @@ import io
 
 class CreatePostBot:
     def __init__(self):
-        self.base_url = "http://localhost:8080"
+        self.base_url = "http://localhost:8080/api"
         self.session = requests.Session()
         self.auth_token = None
         self.user_id = None
@@ -134,8 +134,8 @@ class CreatePostBot:
             print("🔐 Logging in to coffee_addict account...")
             
             login_data = {
-                "username": "code_ninja",
-                "password": "password123"
+                "username": "coffee_addict11",
+                "password": "coffee_addict11"
             }
             
             response = self.session.post(
@@ -212,7 +212,7 @@ class CreatePostBot:
             }
             
             response = self.session.post(
-                f"{self.base_url}/api/presigned/upload/post-image",
+                f"{self.base_url}/presigned/upload/post-image",
                 json=data
             )
             

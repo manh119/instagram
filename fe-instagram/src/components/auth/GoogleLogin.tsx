@@ -21,6 +21,9 @@ export const GoogleLogin: React.FC<GoogleLoginProps> = ({ onLoginSuccess, onLogi
             const backendUrl = import.meta.env.VITE_API_BASE_URL;
             const oauth2Url = `${backendUrl}/oauth2/authorize/google`;
 
+            console.log('Google Login - Backend URL:', backendUrl);
+            console.log('Google Login - OAuth2 URL:', oauth2Url);
+
             // Store the current URL to redirect back after OAuth2
             sessionStorage.setItem('oauth2_redirect_uri', window.location.href);
 

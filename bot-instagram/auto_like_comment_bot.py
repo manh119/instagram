@@ -13,7 +13,7 @@ from datetime import datetime
 
 class LikeAndCommentBot:
     def __init__(self):
-        self.base_url = "http://localhost:8080"
+        self.base_url = "http://localhost:8080/api"
         self.session = requests.Session()
         self.auth_token = None
         self.user_id = None
@@ -131,7 +131,7 @@ class LikeAndCommentBot:
         
         # Bot accounts to use (you can add more)
         self.bot_accounts = [
-            {"username": "coffee_addict", "password": "password123"},
+            {"username": "coffee_addict11", "password": "coffee_addict11"},
             # Add more accounts here if you have them
         ]
         
