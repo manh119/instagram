@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+      MYSQL_ROOT_PASSWORD: app
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    build:
+      context: ./rabbitmq-with-stomp-docker
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  spring-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - minio
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - LOGGING_FILE_NAME=/app/logs/application.log
+      - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+      # Database Configuration
+      - DB_HOST=mysql
+      - DB_NAME=app
+      - DB_USERNAME=app
+      - DB_PASSWORD=app
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=1
+      # RabbitMQ Configuration
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_STOMP_HOST=rabbitmq
+      - RABBITMQ_STOMP_PORT=61613
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      # MinIO Configuration
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_EXTERNAL_ENDPOINT=http://localhost:9000
+      # JWT Configuration
+      - JWT_SECRET=9wz+3e2U$Kj&Fz^6r@H7qM!PpC4vLxDgJtQ1zB8sYe9wz+3e2U$Kj&Fz^6r@H7qM!PpC4vLxDgJtQ1zB8sYe
+      - JWT_EXPIRATION=86400000
+      # OAuth2 Configuration
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your-google-client-id}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
+      - GOOGLE_REDIRECT_URI=http://localhost:8080/oauth2/callback/google
+      - OAUTH2_REDIRECT_URI=http://localhost:5173/oauth2/redirect
+      # Media Configuration
+      - MEDIA_BASE_URL=http://localhost:8080
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "instagram-backend"
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
