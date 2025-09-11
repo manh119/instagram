@@ -6,8 +6,8 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      # MYSQL_USER: ${DB_USERNAME}
+      # MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "3306:3306"
@@ -108,9 +108,7 @@ services:
         tag: "minio-prod"
 
   spring-app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+    image: ghcr.io/manh119/be-instagram:latest
     restart: always
     ports:
       - "8080:8080"

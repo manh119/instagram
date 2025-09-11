@@ -20,6 +20,12 @@ public class PreSignedUrlService {
     @Autowired
     private io.minio.MinioClient minioClient;
 
+    @Value("${spring.io.minio.external-endpoint}")
+    private String externalMinioEndpoint;
+
+    @Value("${spring.io.minio.endpoint}")
+    private String minioEndpoint;
+
     @Value("${spring.io.minio.bucket-name}")
     private String bucketName;
 
@@ -45,6 +51,8 @@ public class PreSignedUrlService {
                             .object(objectKey)
                             .expiry(15, TimeUnit.MINUTES)
                             .build());
+
+            uploadUrl = uploadUrl.replace(minioEndpoint, externalMinioEndpoint);
 
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(uploadUrl)
@@ -92,6 +100,8 @@ public class PreSignedUrlService {
                             .expiry(15, TimeUnit.MINUTES)
                             .build());
 
+            uploadUrl = uploadUrl.replace(minioEndpoint, externalMinioEndpoint);
+
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(uploadUrl)
                     .objectKey(objectKey)
@@ -129,6 +139,8 @@ public class PreSignedUrlService {
                             .object(objectKey)
                             .expiry(7, TimeUnit.DAYS) // 7 days for viewing
                             .build());
+
+            viewUrl = viewUrl.replace(minioEndpoint, externalMinioEndpoint);
 
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(viewUrl) // Reusing the same field for view URL

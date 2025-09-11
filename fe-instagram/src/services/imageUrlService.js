@@ -49,16 +49,23 @@ class ImageUrlService {
             console.log('Generating new pre-signed URL for:', objectKey);
             const response = await presignedUrlService.getImageViewUrl(objectKey);
 
+            if (!response || !response.uploadUrl) {
+                console.warn('Invalid response from getImageViewUrl:', response);
+                return imageUrl; // Return original URL as fallback
+            }
+
             // Cache the URL
             this.urlCache.set(objectKey, {
                 url: response.uploadUrl, // uploadUrl field contains the view URL
                 expiresAt: Date.now() + this.cacheDuration
             });
 
+            console.log('Successfully generated pre-signed URL for:', objectKey);
             return response.uploadUrl;
 
         } catch (error) {
             console.error('Failed to get pre-signed URL for:', objectKey, error);
+            console.error('Error details:', error.message, error.stack);
             return imageUrl; // Return original URL as fallback
         }
     }
@@ -90,8 +97,8 @@ class ImageUrlService {
             return minioMatch[1];
         }
 
-        // Handle backend proxy URLs: http://localhost:8080/images/filename.png
-        const backendMatch = url.match(/\/images\/([^\/\?]+)/);
+        // Handle backend proxy URLs: http://localhost:8080/api/images/filename.png
+        const backendMatch = url.match(/\/api\/images\/([^\/\?]+)/);
         if (backendMatch) {
             return `posts/${backendMatch[1]}`;
         }

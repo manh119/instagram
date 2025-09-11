@@ -13,6 +13,8 @@ import jakarta.annotation.PostConstruct;
 
 @Configuration
 @PropertySource(value = "classpath:application.yml", ignoreResourceNotFound = true)
+@Profile("dev") // only run when dev profile is active, run with .env.dev by
+                // SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
 public class DotenvConfig {
 
     @Autowired
@@ -35,7 +37,8 @@ public class DotenvConfig {
                         .addFirst(new EnvPropertySource("dotenv", dotenv));
             }
         } catch (Exception e) {
-            // Log warning but don't fail startup - environment variables from Docker Compose should take precedence
+            // Log warning but don't fail startup - environment variables from Docker
+            // Compose should take precedence
             System.err.println("Warning: Could not load .env.dev file: " + e.getMessage());
             System.err.println("Application will continue with system environment variables only.");
         }

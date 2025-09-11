@@ -35,8 +35,7 @@ public class MinioConfig {
   @Bean
   public MinioClient minioClient() {
     MinioClient client = MinioClient.builder()
-        // .endpoint(minioEndpoint)
-        .endpoint(externalMinioEndpoint)
+        .endpoint(minioEndpoint)
         .credentials(minioAccessKey, minioSecretKey)
         .region("us-east-1")
         .build();

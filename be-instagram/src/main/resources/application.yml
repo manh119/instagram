@@ -39,13 +39,13 @@ logging:
 
         # Third-party libraries
         io.minio: INFO
-        
+
         # WebSocket and messaging logging
         org.springframework.web.socket: WARN
         org.springframework.messaging: WARN
         org.springframework.web.socket.handler: WARN
         org.springframework.web.socket.server: WARN
-        
+
         # Application WebSocket classes
         com.engineerpro.example.redis.config.WebSocketConfig: WARN
         com.engineerpro.example.redis.controller.WebSocketController: INFO
@@ -60,6 +60,7 @@ spring:
             database: ${REDIS_DATABASE}
             host: ${REDIS_HOST}
             port: ${REDIS_PORT}
+            password: ${REDIS_PASSWORD}
     datasource:
         password: ${DB_PASSWORD}
         tomcat:
@@ -114,7 +115,7 @@ spring:
         external-endpoint: ${MINIO_EXTERNAL_ENDPOINT} # use when frontend needs to access from host
         access-key: ${MINIO_ACCESS_KEY}
         secret-key: ${MINIO_SECRET_KEY}
-        bucket-name: instagram-bucket
+        bucket-name: ${MINIO_BUCKET_NAME}
 
 # JWT Configuration - Use environment variables for security
 jwt:

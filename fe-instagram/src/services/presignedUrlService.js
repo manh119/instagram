@@ -207,6 +207,45 @@ class PreSignedUrlService {
             throw error;
         }
     }
+
+    /**
+     * Get pre-signed URL for viewing an image
+     */
+    async getImageViewUrl(objectKey) {
+        try {
+            console.log('=== Requesting Image View URL ===');
+            console.log('Object Key:', objectKey);
+
+            const response = await fetch(`${API_BASE_URL}/presigned/view/image`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authService.getToken()}`
+                },
+                body: JSON.stringify({
+                    objectKey
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to get view URL');
+            }
+
+            const data = await response.json();
+            console.log('=== Image View URL Received ===');
+            console.log('View URL:', data.uploadUrl);
+            console.log('Object Key:', data.objectKey);
+            console.log('Expires In:', data.expiresIn, 'seconds');
+
+            return data;
+
+        } catch (error) {
+            console.error('=== Failed to Get Image View URL ===');
+            console.error('Error:', error.message);
+            throw error;
+        }
+    }
 }
 
 // Create singleton instance

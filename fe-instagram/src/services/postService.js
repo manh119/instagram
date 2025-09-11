@@ -86,8 +86,10 @@ class PostService {
 
             // Return the full URL to the uploaded image
             // Extract just the filename from the object key (remove 'posts/' prefix)
-            const filename = result.objectKey.split('/').pop();
-            return `${this.baseURL}/images/${filename}`;
+            console.log('get file name from url for view:', this.baseURL + '/presigned/view/image/' + result.objectKey);
+
+            const imageUrl = fetch(this.baseURL + '/presigned/view/image/' + result.objectKey);
+            return imageUrl;
 
         } catch (error) {
             console.error('=== Image Upload Failed ===');

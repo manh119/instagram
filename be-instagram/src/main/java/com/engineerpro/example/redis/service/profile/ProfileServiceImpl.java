@@ -17,12 +17,10 @@ import com.engineerpro.example.redis.repository.ProfileRepository;
 import com.engineerpro.example.redis.repository.FollowerRepository;
 import com.engineerpro.example.redis.repository.PostRepository;
 import com.engineerpro.example.redis.repository.UserRepository;
-import com.engineerpro.example.redis.service.UploadService;
 
 @Service
 public class ProfileServiceImpl implements ProfileService {
-  @Autowired
-  private UploadService uploadService;
+
   @Autowired
   private ProfileRepository profileRepository;
   @Autowired
@@ -36,18 +34,18 @@ public class ProfileServiceImpl implements ProfileService {
   @Override
   public Profile getUserProfile(UserPrincipal userPrincipal) {
     User user = userRepository.findById(userPrincipal.getId()).orElseThrow(UserNotFoundException::new);
-    
+
     // Get all profiles for this user (handles duplicates)
     List<Profile> profiles = profileRepository.findByUser(user);
-    
+
     Profile profile;
     if (profiles.isEmpty()) {
       // No profile found, create a new one
       profile = Profile.builder()
-        .user(user)
-        .displayName(userPrincipal.getName())
-        .username(userPrincipal.getUsername())
-        .build();
+          .user(user)
+          .displayName(userPrincipal.getName())
+          .username(userPrincipal.getUsername())
+          .build();
       profileRepository.save(profile);
     } else if (profiles.size() == 1) {
       // Single profile found, use it
@@ -57,7 +55,7 @@ public class ProfileServiceImpl implements ProfileService {
       // TODO: Consider cleaning up duplicate profiles in the future
       profile = profiles.get(0);
     }
-    
+
     return profile;
   }
 
@@ -69,16 +67,16 @@ public class ProfileServiceImpl implements ProfileService {
   @Override
   public GetProfileResponse getUserProfileWithCounts(int id) {
     Profile profile = getUserProfile(id);
-    
+
     // Get follower count for this profile
     int followersCount = followerRepository.countByFollowingUserId(profile.getId());
-    
+
     // Get following count for this profile
     int followingCount = followerRepository.countByFollowerUserId(profile.getId());
-    
+
     // Get posts count for this profile
     int postsCount = postRepository.countByCreatedBy(profile);
-    
+
     return GetProfileResponse.builder()
         .profile(profile)
         .followersCount(followersCount)
@@ -99,9 +97,8 @@ public class ProfileServiceImpl implements ProfileService {
 
   @Override
   public Profile updateProfileImage(UserPrincipal userPrincipal, UpdateProfileImageRequest request) {
-    String url = uploadService.uploadImage(request.getBase64ImageString());
     Profile profile = this.getUserProfile(userPrincipal);
-    profile.setProfileImageUrl(url);
+
     profileRepository.save(profile);
     return profile;
   }
@@ -110,16 +107,16 @@ public class ProfileServiceImpl implements ProfileService {
   public GetProfileResponse getUserProfileByUsername(String username) {
     Profile profile = profileRepository.findOneByUsername(username)
         .orElseThrow(UserNotFoundException::new);
-    
+
     // Get follower count for this profile
     int followersCount = followerRepository.countByFollowingUserId(profile.getId());
-    
+
     // Get following count for this profile
     int followingCount = followerRepository.countByFollowerUserId(profile.getId());
-    
+
     // Get posts count for this profile
     int postsCount = postRepository.countByCreatedBy(profile);
-    
+
     return GetProfileResponse.builder()
         .profile(profile)
         .followersCount(followersCount)
