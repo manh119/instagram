@@ -56,7 +56,7 @@ const useLogin = () => {
 			await login(user, data.token);
 			showToast("Success", "Login successful", "success");
 		} catch (error) {
-			showToast("Error", error.message, "error");
+			//showToast("Error", error.message, "error");
 		} finally {
 			setIsLoading(false);
 		}

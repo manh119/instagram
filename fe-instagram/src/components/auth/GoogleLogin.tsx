@@ -5,6 +5,7 @@ declare global {
     interface ImportMeta {
         readonly env: {
             readonly VITE_API_BASE_URL?: string;
+            readonly VITE_OAUTH2_BASE_URL?: string;
         };
     }
 }
@@ -18,10 +19,10 @@ export const GoogleLogin: React.FC<GoogleLoginProps> = ({ onLoginSuccess, onLogi
     const handleGoogleLogin = () => {
         try {
             // Redirect to backend OAuth2 endpoint
-            const backendUrl = import.meta.env.VITE_API_BASE_URL;
-            const oauth2Url = `${backendUrl}/oauth2/authorize/google`;
+            const oauth2BaseUrl = import.meta.env.VITE_OAUTH2_BASE_URL || 'http://localhost:8080';
+            const oauth2Url = `${oauth2BaseUrl}/oauth2/authorize/google`;
 
-            console.log('Google Login - Backend URL:', backendUrl);
+            console.log('Google Login - OAuth2 Base URL:', oauth2BaseUrl);
             console.log('Google Login - OAuth2 URL:', oauth2Url);
 
             // Store the current URL to redirect back after OAuth2

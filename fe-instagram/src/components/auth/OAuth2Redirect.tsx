@@ -59,8 +59,8 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
                             navigate(redirectTo);
                         }, 3000);
                     } else {
-                        setStatus('error');
-                        setMessage('Authentication failed. Please try again.');
+                        //setStatus('error');
+                        //setMessage('Authentication failed. Please try again.');
 
                         onError?.('Authentication failed');
 
@@ -211,51 +211,7 @@ export const OAuth2Redirect: React.FC<OAuth2RedirectProps> = ({
                     </button>
                 )}
 
-                {/* Test button for debugging */}
-                <button
-                    onClick={async () => {
-                        try {
-                            const mockUser = {
-                                uid: 'test-user',
-                                username: 'testuser',
-                                fullName: 'Test User',
-                                name: 'Test User',
-                                provider: 'test',
-                                email: 'test@example.com',
-                                picture: '/profilepic.png',
-                                profilePicURL: '/profilepic.png',
-                                bio: 'Test user for debugging',
-                                followers: [],
-                                following: []
-                            };
-                            const mockToken = 'test.jwt.token';
 
-                            await login(mockUser, mockToken);
-                            setStatus('success');
-                            setMessage('Test login successful! Redirecting...');
-
-                            setTimeout(() => {
-                                navigate(redirectTo);
-                            }, 1500);
-                        } catch (error) {
-                            console.error('Test login error:', error);
-                            setStatus('error');
-                            setMessage('Test login failed: ' + error.message);
-                        }
-                    }}
-                    style={{
-                        marginTop: '20px',
-                        padding: '10px 20px',
-                        backgroundColor: '#9b59b6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                    }}
-                >
-                    Test Login (Debug)
-                </button>
             </div>
 
             <style>{`
