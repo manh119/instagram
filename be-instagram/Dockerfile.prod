@@ -35,7 +35,7 @@ RUN addgroup -g 1001 -S appgroup && \
 
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/ /app/
+COPY --from=builder /app/build/libs/spring-app-1.0.jar app.jar
 
 RUN mkdir -p /app/logs /app/data && \
     chown -R appuser:appgroup /app
@@ -49,4 +49,4 @@ ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxR
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/actuator/health || exit 1
 
-CMD ["sh", "-c", "java $JAVA_OPTS -jar *.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
