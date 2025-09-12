@@ -41,7 +41,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 		logger.info("=== Configuring WebSocket Message Broker ===");
 		
 		// Check if we're in production mode
-		boolean isProduction = environment.acceptsProfiles("docker-compose", "prod");
+		boolean isProduction = environment.acceptsProfiles("prod");
 		logger.info("Production mode: {}", isProduction);
 		
 		if (isProduction) {

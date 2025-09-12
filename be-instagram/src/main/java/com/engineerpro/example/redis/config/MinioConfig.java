@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class MinioConfig {
@@ -33,6 +34,7 @@ public class MinioConfig {
    * Default MinIO client for internal use (backend ↔ MinIO inside Docker).
    */
   @Bean
+  @Primary
   public MinioClient minioClient() {
     MinioClient client = MinioClient.builder()
         .endpoint(minioEndpoint)
@@ -43,6 +45,15 @@ public class MinioConfig {
     createBucketIfNotExists(client, defaultBucket);
 
     return client;
+  }
+
+  @Bean
+  public MinioClient externalMinioClient() {
+    return MinioClient.builder()
+        .endpoint(externalMinioEndpoint)
+        .credentials(minioAccessKey, minioSecretKey)
+        .region("us-east-1")
+        .build();
   }
 
   private String maskKey(String key) {

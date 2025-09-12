@@ -63,7 +63,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
+      - SPRING_PROFILES_ACTIVE=dev
       - LOGGING_FILE_NAME=/app/logs/application.log
       - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
       # Database Configuration

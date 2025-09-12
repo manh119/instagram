@@ -1,6 +1,9 @@
 package com.engineerpro.example.redis.service;
 
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MinioClient;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,7 +21,8 @@ public class PreSignedUrlService {
     private static final Logger logger = LoggerFactory.getLogger(PreSignedUrlService.class);
 
     @Autowired
-    private io.minio.MinioClient minioClient;
+    @Qualifier("externalMinioClient")
+    private MinioClient externalClient;
 
     @Value("${spring.io.minio.external-endpoint}")
     private String externalMinioEndpoint;
@@ -44,15 +48,13 @@ public class PreSignedUrlService {
             String objectKey = "posts/" + uniqueFileName;
 
             // Generate pre-signed URL using PUT method directly
-            String uploadUrl = minioClient.getPresignedObjectUrl(
+            String uploadUrl = externalClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(io.minio.http.Method.PUT)
                             .bucket(bucketName)
                             .object(objectKey)
                             .expiry(15, TimeUnit.MINUTES)
                             .build());
-
-            uploadUrl = uploadUrl.replace(minioEndpoint, externalMinioEndpoint);
 
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(uploadUrl)
@@ -92,15 +94,13 @@ public class PreSignedUrlService {
             // Generate pre-signed URL using PUT method directly
 
             // Generate pre-signed URL using PUT method directly
-            String uploadUrl = minioClient.getPresignedObjectUrl(
+            String uploadUrl = externalClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(io.minio.http.Method.PUT)
                             .bucket(bucketName)
                             .object(objectKey)
                             .expiry(15, TimeUnit.MINUTES)
                             .build());
-
-            uploadUrl = uploadUrl.replace(minioEndpoint, externalMinioEndpoint);
 
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(uploadUrl)
@@ -132,15 +132,13 @@ public class PreSignedUrlService {
             logger.info("Bucket: {}", bucketName);
 
             // Generate pre-signed URL using GET method
-            String viewUrl = minioClient.getPresignedObjectUrl(
+            String viewUrl = externalClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(io.minio.http.Method.GET)
                             .bucket(bucketName)
                             .object(objectKey)
                             .expiry(7, TimeUnit.DAYS) // 7 days for viewing
                             .build());
-
-            viewUrl = viewUrl.replace(minioEndpoint, externalMinioEndpoint);
 
             PreSignedUrlResponse response = PreSignedUrlResponse.builder()
                     .uploadUrl(viewUrl) // Reusing the same field for view URL

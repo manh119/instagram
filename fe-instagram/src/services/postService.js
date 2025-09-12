@@ -85,10 +85,12 @@ class PostService {
             console.log('Result:', result);
 
             // Return the full URL to the uploaded image
-            // Extract just the filename from the object key (remove 'posts/' prefix)
-            console.log('get file name from url for view:', this.baseURL + '/presigned/view/image/' + result.objectKey);
+            // Get authenticated presigned URL for viewing the image
+            console.log('Getting authenticated view URL for object key:', result.objectKey);
 
-            const imageUrl = fetch(this.baseURL + '/presigned/view/image/' + result.objectKey);
+            const viewUrlData = await presignedUrlService.getImageViewUrl(result.objectKey);
+            const imageUrl = viewUrlData.uploadUrl; // uploadUrl field contains the presigned view URL
+
             return imageUrl;
 
         } catch (error) {
