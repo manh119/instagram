@@ -1,8 +1,8 @@
-name: Build and Push Docker image
+name: Build and Push Docker image for release
 
 on:
   push:
-    branches: ["master"]
+    branches: ["release"]
 
 jobs:
   build:
