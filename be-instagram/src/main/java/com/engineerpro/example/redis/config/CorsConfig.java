@@ -1,12 +1,12 @@
 package com.engineerpro.example.redis.config;
 
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
@@ -20,7 +20,8 @@ public class CorsConfig {
                 "http://localhost:3000", // Create React App default
                 "http://localhost:3001", // Frontend production port
                 "http://localhost:5173", // Vite default
-                "http://localhost:8080" // Your backenkend port
+                "http://localhost:8080", // Your backenkend port
+                "http://14.225.204.207:80" // Your backend production IP
         ));
 
         // Allow common HTTP methods
@@ -28,8 +29,7 @@ public class CorsConfig {
 
         // Allow common headers
         configuration.setAllowedHeaders(Arrays.asList(
-            "Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"
-        ));
+                "Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"));
 
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
