@@ -115,7 +115,7 @@ class WebSocketService {
 
         try {
             // Create STOMP client with native WebSocket
-            const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+            const baseUrl = import.meta.env.VITE_API_BASE_URL;
             const wsUrl = `${baseUrl}/ws`.replace('http', 'ws');
             console.log('Base URL from env:', baseUrl);
             console.log('WebSocket URL constructed:', wsUrl);

@@ -67,7 +67,7 @@ const useNotifications = () => {
             const getProfileId = async () => {
                 try {
                     // Use the same pattern as userProfileService
-                    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+                    const baseURL = import.meta.env.VITE_API_BASE_URL;
                     const response = await fetch(`${baseURL}/profiles/me`, {
                         headers: {
                             'Authorization': `Bearer ${authService.getToken()}`,
