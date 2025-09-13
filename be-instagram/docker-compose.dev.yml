@@ -68,9 +68,11 @@ services:
       - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
       # Database Configuration
       - DB_HOST=mysql
+      - DB_PORT=3306
       - DB_NAME=app
       - DB_USERNAME=app
       - DB_PASSWORD=app
+      - DB_ROOT_PASSWORD=root@123
       # Redis Configuration
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -90,6 +92,7 @@ services:
       # JWT Configuration
       - JWT_SECRET=9wz+3e2U$Kj&Fz^6r@H7qM!PpC4vLxDgJtQ1zB8sYe9wz+3e2U$Kj&Fz^6r@H7qM!PpC4vLxDgJtQ1zB8sYe
       - JWT_EXPIRATION=86400000
+      - JWT_REFRESH_EXPIRATION=604800000
       # OAuth2 Configuration
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your-google-client-id}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your-google-client-secret}

@@ -55,6 +55,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_web_stomp &&
+             rabbitmq-server"
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -108,7 +111,7 @@ services:
         tag: "minio-prod"
 
   spring-app:
-    image: ghcr.io/manh119/be-instagram:latest
+    image: instagram-app:latest
     restart: always
     ports:
       - "8080:8080"
@@ -129,7 +132,7 @@ services:
       # RabbitMQ Configuration
       - RABBITMQ_HOST=${RABBITMQ_HOST}
       - RABBITMQ_PORT=${RABBITMQ_PORT}
-      - RABBITMQ_STOMP_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_STOMP_HOST=${RABBITMQ_STOMP_HOST}
       - RABBITMQ_STOMP_PORT=${RABBITMQ_STOMP_PORT}
       - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}

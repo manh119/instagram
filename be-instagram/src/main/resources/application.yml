@@ -7,38 +7,38 @@ logging:
     level:
         # Root level
         root: INFO
-        com.engineerpro.example.redis.controller: INFO
-        com.engineerpro.example.redis.service: INFO
-        com.engineerpro.example.redis.repository: INFO
-        com.engineerpro.example.redis.security: INFO
-        com.engineerpro.example.redis.event: INFO
-        com.engineerpro.example.redis.config: INFO
+        com.engineerpro.example.redis.controller: WARN
+        com.engineerpro.example.redis.service: WARN
+        com.engineerpro.example.redis.repository: WARN
+        com.engineerpro.example.redis.security: WARN
+        com.engineerpro.example.redis.event: WARN
+        com.engineerpro.example.redis.config: WARN
 
         # Framework levels
         org.springframework:
             jdbc:
-                core: INFO
+                core: WARN
             web:
                 filter:
-                    CommonsRequestLoggingFilter: INFO
-            security: INFO
+                    CommonsRequestLoggingFilter: WARN
+            security: WARN
             data:
-                jpa: INFO
-                redis: INFO
-            amqp: INFO
+                jpa: WARN
+                redis: WARN
+            amqp: WARN
             websocket: WARN
             messaging: WARN
 
         # Database levels
         org.hibernate:
-            SQL: INFO
+            SQL: WARN
             type:
                 descriptor:
                     sql:
-                        BasicBinder: INFO
+                        BasicBinder: WARN
 
         # Third-party libraries
-        io.minio: INFO
+        io.minio: WARN
 
         # WebSocket and messaging logging
         org.springframework.web.socket: WARN
@@ -48,13 +48,15 @@ logging:
 
         # Application WebSocket classes
         com.engineerpro.example.redis.config.WebSocketConfig: WARN
-        com.engineerpro.example.redis.controller.WebSocketController: INFO
-        com.engineerpro.example.redis.service.NotificationWebSocketService: INFO
+        com.engineerpro.example.redis.controller.WebSocketController: WARN
+        com.engineerpro.example.redis.service.NotificationWebSocketService: WARN
 
 # Default configuration - applies to all profiles
 spring:
     profiles:
         active: dev
+    websocket:
+        enabled: true
     data:
         redis:
             database: ${REDIS_DATABASE}
@@ -163,51 +165,34 @@ springdoc:
             .swagger-ui .auth-container p { color: #666; margin-bottom: 10px; }
             .swagger-ui .auth-container code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; }
 ---
-spring.config.activate.on-profile: local
-# Local profile - no overrides needed, uses default config
----
 spring.config.activate.on-profile: prod
 # Production-specific overrides only
 spring:
     data:
         redis:
             password: ${REDIS_PASSWORD} # Only add password for production
+    websocket:
+        enabled: true
     rabbitmq:
         username: ${RABBITMQ_USERNAME} # Only add username for production
         password: ${RABBITMQ_PASSWORD} # Only add password for production
+    io.minio:
+        endpoint: ${MINIO_ENDPOINT}
+        external-endpoint: ${MINIO_EXTERNAL_ENDPOINT} # use when frontend needs to access from host
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
+        bucket-name: ${MINIO_BUCKET_NAME}
 
 # Production logging configuration
 logging:
     level:
         root: WARN
-        com.engineerpro.example.redis: INFO
+        com.engineerpro.example.redis: WARN
         org.springframework: WARN
         org.hibernate: WARN
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
         file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
----
-spring.config.activate.on-profile: docker-compose
-# Docker Compose-specific overrides only
-spring:
-    datasource:
-        url: "jdbc:mysql://mysql/app"
-        username: app
-        password: app
-    data:
-        redis:
-            host: redis
-            port: 6379
-    rabbitmq:
-        host: rabbitmq
-        port: 5672
-        stomp:
-            relay:
-                host: rabbitmq
-                port: 61613
-                login: guest
-                passcode: guest
 
 # Media serving configuration
 media:
