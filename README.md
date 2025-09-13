@@ -153,11 +153,6 @@ instagram/
 
 ## 🛠️ Installation & Setup
 
-### Prerequisites
-- **Java 17+** for backend development
-- **Node.js 18+** for frontend development
-- **Docker & Docker Compose** for containerization
-
 ### Quick Start with Cursor IDE (the best way to start :) - I've already tried it and it work :v
 
 1. **Clone the repository**
@@ -166,43 +161,6 @@ instagram/
    cd instagram
    ```
 2. import this project in to Cursor IDE and prompt "run this project @instagram in dev mode"
-
-
-### Quick Start with Docker in 5 minutes
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/manh119/instagram.git
-   cd instagram
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   # Copy environment template
-   cp be-instagram/.env.example be-instagram/.env
-   
-   # Edit with your configuration
-   nano be-instagram/.env
-   ```
-
-3. **Start the development environment**
-   ```bash
-   cd be-instagram
-   docker-compose -f docker-compose.dev.yml up -d
-   ```
-
-4. **Start the frontend**
-   ```bash
-   cd fe-instagram
-   npm install
-   npm run dev
-   ```
-
-5. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8080
-   - Swagger UI: http://localhost:8080/swagger-ui
-   - RabbitMQ Management: http://localhost:15672
 
 ### Production Deployment
 
@@ -270,7 +228,7 @@ python3 create_post_bot.py
 
 ## 📞 Contact
 
-**manh119** - manhnatria2@gmail.com
+- manhnatria2@gmail.com
 ---
 
 <div align="center">
