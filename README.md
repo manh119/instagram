@@ -1,8 +1,8 @@
-# 🚀 Instagram Clone - Full-Stack Social Media Platform
+# 🚀 Instagram Demo - Full-Stack Social Media
 
 <div align="center">
 
-![Instagram Clone Demo](readme/demo.gif)
+![Instagram Demo](readme/demo_hd_fast.gif)
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
@@ -12,17 +12,16 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
 [![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-green.svg)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 
-**A production-ready, scalable Instagram clone built with modern microservices architecture, real-time features, and enterprise-grade security.**
+**A production-ready, scalable Instagram built with real-time features, and enterprise-grade security.**
 
 </div>
 
 ## 🎯 Project Overview
 
-This is a comprehensive Instagram clone that demonstrates advanced full-stack development skills, microservices architecture, and modern DevOps practices. The platform includes all core Instagram features with additional enterprise-level capabilities like real-time notifications, automated engagement bots, and scalable cloud deployment.
+This is a comprehensive Instagram clone that demonstrates advanced full-stack development skills, and modern DevOps practices. The platform includes all core Instagram features with additional enterprise-level capabilities like real-time notifications, automated engagement bots, and scalable cloud deployment.
 
 ### 🌟 Key Highlights
 
-- **🏗️ Microservices Architecture**: Modular backend with clear separation of concerns
 - **⚡ Real-time Features**: WebSocket-based notifications and live updates
 - **🔐 Enterprise Security**: JWT authentication, OAuth2, and comprehensive authorization
 - **📱 Modern Frontend**: React 18 with Chakra UI and responsive design
@@ -41,7 +40,7 @@ This is a comprehensive Instagram clone that demonstrates advanced full-stack de
 │ • Chakra UI     │    │ • REST APIs     │    │ • MySQL 8.0     │
 │ • WebSocket     │    │ • WebSocket     │    │ • Redis 7       │
 │ • State Mgmt    │    │ • Security      │    │ • RabbitMQ      │
-│ • PWA Ready     │    │ • Microservices │    │ • MinIO S3      │
+│ • PWA Ready     │    │                 │    │ • MinIO S3      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -81,7 +80,6 @@ This is a comprehensive Instagram clone that demonstrates advanced full-stack de
 - **OAuth2 Integration** (Google, Microsoft) with Spring Security
 - **Role-based Access Control** (RBAC) with authorities
 - **Secure Password Hashing** with BCrypt
-- **Session Management** with Redis-backed sessions
 
 ### 📱 Core Social Features
 - **User Profiles** with bio, profile pictures, and statistics
@@ -99,15 +97,11 @@ This is a comprehensive Instagram clone that demonstrates advanced full-stack de
 - **Message Broadcasting** via RabbitMQ STOMP relay
 - **Connection Management** with authentication and session handling
 
-### 🤖 AI & Automation
+### 🤖 Bot Automation
 - **Engagement Bot** for automated likes and comments
 - **Content Creation Bot** for automated post generation
-- **Smart Comment Generation** with 100+ pre-defined responses
-- **Automated User Interaction** with configurable intervals
-- **Bot Account Management** with multiple account support
 
 ### 🏗️ Advanced Backend Features
-- **Microservices Architecture** with clear service boundaries
 - **RESTful API Design** with comprehensive error handling
 - **Database Optimization** with JPA queries and indexing
 - **Caching Strategy** with Redis for performance
@@ -163,15 +157,23 @@ instagram/
 - **Java 17+** for backend development
 - **Node.js 18+** for frontend development
 - **Docker & Docker Compose** for containerization
-- **MySQL 8.0+** (or use Docker)
-- **Redis 7+** (or use Docker)
 
-### Quick Start with Docker
+### Quick Start with Cursor IDE (the best way to start :) - I've already tried it and it work :v
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/instagram-clone.git
-   cd instagram-clone
+   git clone https://github.com/manh119/instagram.git
+   cd instagram
+   ```
+2. import this project in to Cursor IDE and prompt "run this project @instagram in dev mode"
+
+
+### Quick Start with Docker in 5 minutes
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/manh119/instagram.git
+   cd instagram
    ```
 
 2. **Set up environment variables**
@@ -204,26 +206,7 @@ instagram/
 
 ### Production Deployment
 
-1. **Configure production environment**
-   ```bash
-   # Set production environment variables
-   export SPRING_PROFILES_ACTIVE=prod
-   export DB_PASSWORD=your_secure_password
-   export REDIS_PASSWORD=your_redis_password
-   # ... other production variables
-   ```
-
-2. **Deploy with Docker Compose**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-3. **Set up reverse proxy (Nginx)**
-   ```bash
-   # Configure SSL certificates
-   # Update nginx/conf/app.conf
-   # Restart nginx service
-   ```
+1. I have a video for setting production in VPS at Youtube link : ..TODO..
 
 ## 🔧 API Documentation
 
@@ -263,7 +246,7 @@ instagram/
 ### Engagement Bot
 ```bash
 cd bot-instagram
-python auto_like_comment_bot.py
+python3 auto_like_comment_bot.py
 ```
 
 **Features:**
@@ -276,7 +259,7 @@ python auto_like_comment_bot.py
 ### Content Creation Bot
 ```bash
 cd bot-instagram
-python create_post_bot.py
+python3 create_post_bot.py
 ```
 
 **Features:**
@@ -285,136 +268,15 @@ python create_post_bot.py
 - Scheduled posting capabilities
 - Content variety with different post types
 
-## 📊 Performance & Scalability
-
-### Backend Optimizations
-- **Database Indexing** on frequently queried columns
-- **Redis Caching** for session management and frequently accessed data
-- **Connection Pooling** with HikariCP for database connections
-- **Lazy Loading** for JPA entities to reduce memory usage
-- **Pagination** for large datasets (posts, comments, followers)
-
-### Frontend Optimizations
-- **Code Splitting** with React.lazy() for route-based splitting
-- **Image Optimization** with lazy loading and WebP support
-- **Bundle Optimization** with Vite's tree shaking
-- **State Management** with Zustand for minimal re-renders
-- **WebSocket Connection** pooling for real-time features
-
-### Infrastructure Scalability
-- **Horizontal Scaling** with Docker Swarm or Kubernetes
-- **Load Balancing** with Nginx reverse proxy
-- **Database Replication** with MySQL master-slave setup
-- **Redis Cluster** for distributed caching
-- **Message Queue Scaling** with RabbitMQ clustering
-
-## 🔒 Security Features
-
-### Authentication & Authorization
-- **JWT Tokens** with configurable expiration
-- **Refresh Token Rotation** for enhanced security
-- **OAuth2 Integration** with Google and Microsoft
-- **Password Hashing** with BCrypt and salt rounds
-- **Role-based Access Control** with Spring Security
-
-### API Security
-- **CORS Configuration** for cross-origin requests
-- **Request Validation** with Bean Validation
-- **SQL Injection Prevention** with JPA parameterized queries
-- **XSS Protection** with input sanitization
-- **Rate Limiting** (configurable per endpoint)
-
-### Infrastructure Security
-- **Environment Variables** for sensitive configuration
-- **Docker Security** with non-root user execution
-- **SSL/TLS Termination** with Nginx
-- **Network Isolation** with Docker networks
-- **Logging & Monitoring** for security events
-
-## 🧪 Testing
-
-### Backend Testing
-```bash
-cd be-instagram
-./gradlew test
-```
-
-### Frontend Testing
-```bash
-cd fe-instagram
-npm run test
-```
-
-### Integration Testing
-```bash
-# Start test environment
-docker-compose -f docker-compose.dev.yml up -d
-
-# Run integration tests
-./gradlew integrationTest
-```
-
-## 📈 Monitoring & Logging
-
-### Application Monitoring
-- **Spring Actuator** endpoints for health checks
-- **Structured Logging** with SLF4J and Logback
-- **Request Tracing** with correlation IDs
-- **Performance Metrics** with custom logging
-
-### Infrastructure Monitoring
-- **Docker Health Checks** for container monitoring
-- **Nginx Access Logs** for request analysis
-- **Database Query Logging** for performance optimization
-- **Redis Monitoring** with Redis CLI
-
-## 🚀 Deployment
-
-### Development Environment
-- **Docker Compose** for local development
-- **Hot Reload** for both frontend and backend
-- **Database Migrations** with Flyway
-- **Environment Configuration** with .env files
-
-### Production Environment
-- **Multi-stage Docker Builds** for optimized images
-- **Resource Limits** and health checks
-- **SSL Certificate Management** with Let's Encrypt
-- **Backup Strategies** for database and files
-- **Zero-downtime Deployment** with rolling updates
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Spring Boot** team for the excellent framework
-- **React** team for the powerful frontend library
-- **Chakra UI** for the beautiful component library
-- **Docker** team for containerization technology
-- **Open source community** for inspiration and tools
-
 ## 📞 Contact
 
-**Manh Nguyen** - [@yourusername](https://github.com/yourusername) - your.email@example.com
-
-Project Link: [https://github.com/yourusername/instagram-clone](https://github.com/yourusername/instagram-clone)
-
+**manh119** - manhnatria2@gmail.com
 ---
 
 <div align="center">
 
 **⭐ Star this repository if you found it helpful!**
 
-Made with ❤️ by [Manh Pham](https://github.com/manh119)
+Made with ❤️ by [manh119](https://github.com/manh119/instagram/stargazers)
 
 </div>
