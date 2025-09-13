@@ -20,9 +20,9 @@ public class CorsConfig {
                 "http://localhost:3000", // Create React App default
                 "http://localhost:3001", // Frontend production port
                 "http://localhost:5173", // Vite default
-                "http://localhost:8080", // Your backend port
-                "https://insta-demo-manh.vercel.app" // Your deployed frontend
-        ));
+                "http://localhost:8080", // Your backenkend port
+                "https://14.225.204.207:80", // Your backend production IP
+                "https://insta-demo-manh.vercel.app"));
 
         // Allow common HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

@@ -19,7 +19,7 @@ export const GoogleLogin: React.FC<GoogleLoginProps> = ({ onLoginSuccess, onLogi
     const handleGoogleLogin = () => {
         try {
             // Redirect to backend OAuth2 endpoint
-            const oauth2BaseUrl = import.meta.env.VITE_OAUTH2_BASE_URL || 'http://localhost:8080';
+            const oauth2BaseUrl = import.meta.env.VITE_OAUTH2_BASE_URL;
             const oauth2Url = `${oauth2BaseUrl}/oauth2/authorize/google`;
 
             console.log('Google Login - OAuth2 Base URL:', oauth2BaseUrl);
