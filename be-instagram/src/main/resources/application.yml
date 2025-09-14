@@ -1,6 +1,4 @@
 logging:
-    file:
-        name: ./development_logs/application.log
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
         file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
@@ -50,7 +48,7 @@ logging:
         com.engineerpro.example.redis.config.WebSocketConfig: INFO
         com.engineerpro.example.redis.controller.WebSocketController: INFO
         com.engineerpro.example.redis.service.NotificationWebSocketService: INFO
-
+---
 # Default configuration - applies to all profiles
 spring:
     profiles:
@@ -119,6 +117,9 @@ spring:
         secret-key: ${MINIO_SECRET_KEY}
         bucket-name: ${MINIO_BUCKET_NAME}
 
+logging:
+    file:
+        name: ./development_logs/application.log
 # JWT Configuration - Use environment variables for security
 jwt:
     secret: ${JWT_SECRET}
@@ -187,56 +188,6 @@ spring:
 logging:
     file:
         name: /app/logs/application.log
-    pattern:
-        console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
-        file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
-    level:
-        # Root level
-        root: INFO
-        com.engineerpro.example.redis.controller: INFO
-        com.engineerpro.example.redis.service: INFO
-        com.engineerpro.example.redis.repository: INFO
-        com.engineerpro.example.redis.security: INFO
-        com.engineerpro.example.redis.event: INFO
-        com.engineerpro.example.redis.config: INFO
-
-        # Framework levels
-        org.springframework:
-            jdbc:
-                core: INFO
-            web:
-                filter:
-                    CommonsRequestLoggingFilter: DEBUG
-            security: DEBUG
-            data:
-                jpa: INFO
-                redis: INFO
-            amqp: INFO
-            websocket: INFO
-            messaging: INFO
-
-        # Database levels
-        org.hibernate:
-            SQL: INFO
-            type:
-                descriptor:
-                    sql:
-                        BasicBinder: INFO
-
-        # Third-party libraries
-        io.minio: INFO
-
-        # WebSocket and messaging logging
-        org.springframework.web.socket: INFO
-        org.springframework.messaging: INFO
-        org.springframework.web.socket.handler: INFO
-        org.springframework.web.socket.server: INFO
-
-        # Application WebSocket classes
-        com.engineerpro.example.redis.config.WebSocketConfig: INFO
-        com.engineerpro.example.redis.controller.WebSocketController: INFO
-        com.engineerpro.example.redis.service.NotificationWebSocketService: INFO
-
 # Media serving configuration
 media:
     base-url: ${MEDIA_BASE_URL}
