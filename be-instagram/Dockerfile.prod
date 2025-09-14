@@ -37,8 +37,8 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/spring-app-1.0.jar app.jar
 
-RUN mkdir -p /app/logs /app/data && \
-    chown -R appuser:appgroup /app
+# Create logs directory with appropriate permissions
+RUN mkdir -p /app/logs && chmod -R 777 /app/logs
 
 USER appuser
 

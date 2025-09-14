@@ -128,7 +128,7 @@ services:
       - rabbitmq
       - minio
     volumes:
-      - app_logs:/app/logs
+      - ./production_logs/app_logs:/app/logs
     mem_limit: 1g
     cpus: 0.5
     logging:
@@ -144,9 +144,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
-      - nginx_logs:/var/log/nginx
+      - ./production_logs/nginx_logs:/var/log/nginx
     depends_on:
       - spring-app
     mem_limit: 128m
@@ -162,5 +163,5 @@ volumes:
   redis_data:
   rabbitmq_data:
   minio_data:
-  app_logs:
-  nginx_logs:
+
+
