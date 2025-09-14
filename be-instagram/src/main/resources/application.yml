@@ -7,49 +7,49 @@ logging:
     level:
         # Root level
         root: INFO
-        com.engineerpro.example.redis.controller: WARN
-        com.engineerpro.example.redis.service: WARN
-        com.engineerpro.example.redis.repository: WARN
-        com.engineerpro.example.redis.security: WARN
-        com.engineerpro.example.redis.event: WARN
-        com.engineerpro.example.redis.config: WARN
+        com.engineerpro.example.redis.controller: INFO
+        com.engineerpro.example.redis.service: INFO
+        com.engineerpro.example.redis.repository: INFO
+        com.engineerpro.example.redis.security: INFO
+        com.engineerpro.example.redis.event: INFO
+        com.engineerpro.example.redis.config: INFO
 
         # Framework levels
         org.springframework:
             jdbc:
-                core: WARN
+                core: INFO
             web:
                 filter:
-                    CommonsRequestLoggingFilter: WARN
-            security: WARN
+                    CommonsRequestLoggingFilter: INFO
+            security: INFO
             data:
-                jpa: WARN
-                redis: WARN
-            amqp: WARN
-            websocket: WARN
-            messaging: WARN
+                jpa: INFO
+                redis: INFO
+            amqp: INFO
+            websocket: INFO
+            messaging: INFO
 
         # Database levels
         org.hibernate:
-            SQL: WARN
+            SQL: INFO
             type:
                 descriptor:
                     sql:
-                        BasicBinder: WARN
+                        BasicBinder: INFO
 
         # Third-party libraries
-        io.minio: WARN
+        io.minio: INFO
 
         # WebSocket and messaging logging
-        org.springframework.web.socket: WARN
-        org.springframework.messaging: WARN
-        org.springframework.web.socket.handler: WARN
-        org.springframework.web.socket.server: WARN
+        org.springframework.web.socket: INFO
+        org.springframework.messaging: INFO
+        org.springframework.web.socket.handler: INFO
+        org.springframework.web.socket.server: INFO
 
         # Application WebSocket classes
-        com.engineerpro.example.redis.config.WebSocketConfig: WARN
-        com.engineerpro.example.redis.controller.WebSocketController: WARN
-        com.engineerpro.example.redis.service.NotificationWebSocketService: WARN
+        com.engineerpro.example.redis.config.WebSocketConfig: INFO
+        com.engineerpro.example.redis.controller.WebSocketController: INFO
+        com.engineerpro.example.redis.service.NotificationWebSocketService: INFO
 
 # Default configuration - applies to all profiles
 spring:
@@ -186,10 +186,10 @@ spring:
 # Production logging configuration
 logging:
     level:
-        root: WARN
-        com.engineerpro.example.redis: WARN
-        org.springframework: WARN
-        org.hibernate: WARN
+        root: INFO
+        com.engineerpro.example.redis: INFO
+        org.springframework: INFO
+        org.hibernate: INFO
     pattern:
         console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
         file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
