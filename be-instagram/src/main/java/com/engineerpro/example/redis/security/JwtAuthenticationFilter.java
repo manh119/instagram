@@ -33,65 +33,74 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String requestURI = request.getRequestURI();
+
+        // 🚨 Bypass JWT filter for public endpoints
+        if (requestURI.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String jwt = getJwtFromRequest(request);
-            String requestURI = request.getRequestURI();
             String method = request.getMethod();
 
-            LoggingUtil.logServiceDebug(logger, "JWT Filter Processing", 
-                "Request URI", requestURI,
-                "Method", method,
-                "Has JWT", jwt != null);
+            LoggingUtil.logServiceDebug(logger, "JWT Filter Processing",
+                    "Request URI", requestURI,
+                    "Method", method,
+                    "Has JWT", jwt != null);
 
             if (StringUtils.hasText(jwt)) {
-                LoggingUtil.logServiceDebug(logger, "JWT Token found", 
-                    "Token length", jwt.length(),
-                    "Token start", jwt.substring(0, Math.min(20, jwt.length())) + "...");
-                
+                LoggingUtil.logServiceDebug(logger, "JWT Token found",
+                        "Token length", jwt.length(),
+                        "Token start", jwt.substring(0, Math.min(20, jwt.length())) + "...");
+
                 if (jwtTokenUtil.validateToken(jwt)) {
                     String username = jwtTokenUtil.extractUsername(jwt);
-                    LoggingUtil.logServiceDebug(logger, "JWT Token validated", 
-                        "Username", username,
-                        "Request URI", requestURI);
-                    
+                    LoggingUtil.logServiceDebug(logger, "JWT Token validated",
+                            "Username", username,
+                            "Request URI", requestURI);
+
                     try {
                         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        LoggingUtil.logServiceDebug(logger, "User details loaded", 
-                            "Username", userDetails.getUsername(),
-                            "Authorities", userDetails.getAuthorities().size());
-                        
+                        LoggingUtil.logServiceDebug(logger, "User details loaded",
+                                "Username", userDetails.getUsername(),
+                                "Authorities", userDetails.getAuthorities().size());
+
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        LoggingUtil.logServiceDebug(logger, "Authentication set in security context", 
-                            "Username", username,
-                            "Request URI", requestURI);
+                        LoggingUtil.logServiceDebug(logger, "Authentication set in security context",
+                                "Username", username,
+                                "Request URI", requestURI);
                     } catch (Exception e) {
-                        LoggingUtil.logServiceWarning(logger, "Error loading user details", 
-                            "Username", username,
-                            "Request URI", requestURI,
-                            "Error", e.getMessage());
+                        LoggingUtil.logServiceWarning(logger, "Error loading user details",
+                                "Username", username,
+                                "Request URI", requestURI,
+                                "Error", e.getMessage());
                         logger.error("Could not load user details for request: " + requestURI, e);
                     }
                 } else {
-                    LoggingUtil.logServiceWarning(logger, "JWT Token validation failed", 
-                        "Request URI", requestURI,
-                        "Method", method);
+                    LoggingUtil.logServiceWarning(logger, "JWT Token validation failed",
+                            "Request URI", requestURI,
+                            "Method", method);
                 }
             } else {
-                LoggingUtil.logServiceDebug(logger, "No JWT token found in request", 
-                    "Request URI", requestURI,
-                    "Method", method,
-                    "Headers", getRequestHeaders(request));
+                LoggingUtil.logServiceDebug(logger, "No JWT token found in request",
+                        "Request URI", requestURI,
+                        "Method", method,
+                        "Headers", getRequestHeaders(request));
             }
         } catch (Exception ex) {
-            LoggingUtil.logServiceWarning(logger, "JWT Filter error", 
-                "Request URI", request.getRequestURI(),
-                "Method", request.getMethod(),
-                "Error", ex.getMessage());
-            logger.error("Could not set user authentication in security context for request: " + request.getRequestURI(), ex);
+            LoggingUtil.logServiceWarning(logger, "JWT Filter error",
+                    "Request URI", request.getRequestURI(),
+                    "Method", request.getMethod(),
+                    "Error", ex.getMessage());
+            logger.error(
+                    "Could not set user authentication in security context for request: " + request.getRequestURI(),
+                    ex);
         }
 
         filterChain.doFilter(request, response);
@@ -99,10 +108,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        LoggingUtil.logServiceDebug(logger, "Extracting JWT from request", 
-            "Authorization header", bearerToken != null ? "present" : "missing",
-            "Header value", bearerToken != null ? bearerToken.substring(0, Math.min(30, bearerToken.length())) + "..." : "null");
-        
+        LoggingUtil.logServiceDebug(logger, "Extracting JWT from request",
+                "Authorization header", bearerToken != null ? "present" : "missing",
+                "Header value",
+                bearerToken != null ? bearerToken.substring(0, Math.min(30, bearerToken.length())) + "..." : "null");
+
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
@@ -120,4 +130,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return headers.toString();
     }
 }
-
