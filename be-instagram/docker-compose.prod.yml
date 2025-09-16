@@ -148,6 +148,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
       - ./production_logs/nginx_logs:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro  
     depends_on:
       - spring-app
     mem_limit: 128m
