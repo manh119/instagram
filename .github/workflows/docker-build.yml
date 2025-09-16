@@ -30,12 +30,6 @@ jobs:
           file: ./be-instagram/Dockerfile.prod
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/be-instagram:latest
-      - name: Deploy Nginx with SSL
-        run: |
-          echo "${{ secrets.API_SSL_CERT }}" > /tmp/api.crt
-          echo "${{ secrets.API_SSL_KEY }}" > /tmp/api.key
-          sudo mv /tmp/api.crt /etc/nginx/ssl/api.crt
-          sudo mv /tmp/api.key /etc/nginx/ssl/api.key
       
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.7
